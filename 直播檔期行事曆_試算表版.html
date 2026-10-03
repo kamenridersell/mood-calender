@@ -1,0 +1,1392 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>直播檔期行事曆｜Google 試算表版</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#000;
+  --s1:#0d0d0d;          /* 月曆格 */
+  --s2:#151515;          /* 卡片 */
+  --s3:#1c1c1c;          /* 輸入框 */
+  --line:#262626;
+  --line-2:#333;
+  --text:#efebe3;
+  --text-2:#b8b2a7;
+  --muted:#7d776d;
+  --gold:#cdb07a;
+  --gold-2:#a8884f;
+  --gold-hi:#e6cf9f;
+  --gold-soft:rgba(205,176,122,.12);
+  --gold-line:rgba(205,176,122,.38);
+  --danger:#e08b7b;
+  --on-gold:#17120a;
+  --shadow:0 24px 80px rgba(0,0,0,.7);
+  --r:10px;
+  --chev:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23cdb07a' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#f5f3ee;--s1:#fff;--s2:#fbfaf7;--s3:#f3f0ea;--line:#e4dfd4;--line-2:#d6cfc1;
+    --text:#1b1813;--text-2:#4a443a;--muted:#7a7366;--gold:#9c7a3e;--gold-2:#80622c;--gold-hi:#b8955a;
+    --gold-soft:rgba(156,122,62,.10);--gold-line:rgba(156,122,62,.42);--danger:#b4513f;--on-gold:#fff;--shadow:0 24px 80px rgba(40,30,10,.18);
+    --chev:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%239c7a3e' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  }
+}
+:root[data-theme="light"]{
+  --bg:#f5f3ee;--s1:#fff;--s2:#fbfaf7;--s3:#f3f0ea;--line:#e4dfd4;--line-2:#d6cfc1;
+  --text:#1b1813;--text-2:#4a443a;--muted:#7a7366;--gold:#9c7a3e;--gold-2:#80622c;--gold-hi:#b8955a;
+  --gold-soft:rgba(156,122,62,.10);--gold-line:rgba(156,122,62,.42);--danger:#b4513f;--on-gold:#fff;--shadow:0 24px 80px rgba(40,30,10,.18);
+  --chev:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%239c7a3e' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+*,*::before,*::after{box-sizing:inherit}
+[hidden]{display:none!important}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;letter-spacing:.01em}
+button,input,select{font:inherit;color:inherit;letter-spacing:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.serif{font-family:"Noto Serif TC","Songti TC",serif}
+
+.wrap{max-width:1240px;margin:0 auto;padding:32px 24px 56px}
+
+/* ---------- 頁首 ---------- */
+.top{display:grid;grid-template-columns:1fr auto;align-items:end;gap:20px;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:0}
+.brand{font-family:"Noto Serif TC",serif;font-size:14px;color:var(--gold);letter-spacing:.12em;margin:0 0 10px;font-weight:500}
+.month-title{font-family:"Noto Serif TC",serif;font-weight:700;margin:0;line-height:1;display:flex;align-items:baseline;gap:14px}
+.month-title .mo{font-size:clamp(44px,7vw,72px);letter-spacing:-.01em}
+.month-title .mo small{font-size:.38em;color:var(--gold);margin-left:6px;font-weight:500}
+.month-title .yr{font-size:16px;color:var(--muted);font-weight:500;letter-spacing:.1em}
+.nav{display:flex;gap:8px;align-items:center}
+
+/* ---------- 按鈕 ---------- */
+.btn{height:40px;padding:0 18px;border-radius:var(--r);border:1px solid var(--line-2);background:var(--s2);display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:14px;font-weight:500;white-space:nowrap;transition:border-color .15s,background .15s,color .15s,box-shadow .15s}
+.btn:hover{border-color:var(--gold-line);color:var(--gold-hi)}
+.btn:disabled{opacity:.5;cursor:default}
+.btn.sm{height:32px;padding:0 12px;font-size:13px;border-radius:8px}
+.btn.icon{width:40px;padding:0;font-size:18px}
+.btn.primary{background:linear-gradient(180deg,var(--gold-hi),var(--gold) 55%,var(--gold-2));border-color:var(--gold-2);color:var(--on-gold);font-weight:700;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 6px 18px rgba(205,176,122,.18)}
+.btn.primary:hover{color:var(--on-gold);filter:brightness(1.06)}
+.btn.outline{background:transparent;border-color:var(--gold-line);color:var(--gold)}
+.btn.outline:hover{background:var(--gold-soft)}
+.btn.quiet{background:transparent;border-color:transparent;color:var(--text-2)}
+.btn.quiet:hover{border-color:var(--line-2);color:var(--text)}
+.btn.danger{background:transparent;border-color:transparent;color:var(--danger)}
+.btn.danger:hover{border-color:var(--danger);color:var(--danger)}
+
+/* ---------- 下拉與輸入 ---------- */
+.select,.input{height:44px;width:100%;border-radius:var(--r);border:1px solid var(--line-2);background:var(--s3);padding:0 14px;color:var(--text);font-size:15px;transition:border-color .15s,box-shadow .15s}
+.select{appearance:none;-webkit-appearance:none;background-image:var(--chev);background-repeat:no-repeat;background-position:right 14px center;padding-right:40px;cursor:pointer}
+.select option{background:var(--s2);color:var(--text)}
+.select:hover,.input:hover{border-color:var(--gold-line)}
+.select:focus,.input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-soft)}
+.input::placeholder{color:var(--muted)}
+input[type="date"].input{color-scheme:dark}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]) input[type="date"].input{color-scheme:light}}
+.select.compact{height:40px;width:auto;min-width:150px;font-size:14px;background-color:var(--s2)}
+
+/* ---------- 統計 ---------- */
+.summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-bottom:1px solid var(--line);margin-bottom:22px}
+.summary div{padding:18px 0 18px 20px;border-left:1px solid var(--line)}
+.summary div:first-child{border-left:0;padding-left:0}
+.summary b{display:block;font-family:"Noto Serif TC",serif;font-size:26px;font-weight:700;color:var(--text);line-height:1.2;font-variant-numeric:tabular-nums}
+.summary div.money b{color:var(--gold)}
+.summary span{font-size:12.5px;color:var(--muted)}
+
+.topbar{display:flex;justify-content:flex-end;align-items:center;gap:12px;margin:-12px 0 10px;min-height:32px}
+.toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px 20px;flex-wrap:wrap;margin:4px 0 16px}
+.tb-actions{display:flex;gap:10px;align-items:center;margin-left:auto}
+.tb-sep{width:1px;height:24px;background:var(--line-2);margin:0 4px}
+.hchips{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.hchip{height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--line-2);background:transparent;color:var(--text-2);font-size:14px;display:inline-flex;align-items:center;gap:8px;white-space:nowrap;transition:.15s}
+.hchip i{width:4px;height:16px;border-radius:2px;background:var(--c)}
+.hchip i.k-black{box-shadow:0 0 0 1px #777}
+.hchip:hover{border-color:var(--gold-line);color:var(--text)}
+.hchip.on{background:var(--gold-soft);border-color:var(--gold);color:var(--gold-hi);font-weight:500}
+.toolbar .spacer{flex:1}
+.status{font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
+.status::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--muted)}
+.status.ok::before{background:#7fbf8e}
+
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;margin:0 0 14px;padding:0;list-style:none;font-size:13px;color:var(--text-2)}
+.legend li{display:flex;align-items:center;gap:8px}
+.legend i{width:4px;height:16px;border-radius:2px;background:var(--c)}
+.legend small{color:var(--muted)}
+
+.banner{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;border:1px solid var(--gold-line);background:var(--gold-soft);border-radius:var(--r);padding:12px 16px;margin-bottom:16px;font-size:14px}
+
+/* ---------- 月曆 ---------- */
+.cal-frame{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--line)}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1px}
+.dow{padding:12px;font-size:12px;color:var(--muted);background:var(--s2);letter-spacing:.08em}
+.dow.we{color:var(--gold)}
+.day{min-height:128px;padding:10px 8px 8px;background:var(--s1);text-align:left;border:0;border-radius:0;display:flex;flex-direction:column;gap:5px;transition:background .15s;min-width:0}
+.day:hover{background:var(--s2)}
+.day.out{background:var(--bg)}
+.day.out .num em{color:var(--line-2)}
+.day .num{font-size:13px;display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;padding:0 2px}
+.day .num em{font-style:normal;color:var(--text-2);font-variant-numeric:tabular-nums;min-width:24px;height:24px;display:inline-grid;place-items:center;border-radius:50%}
+.day.today .num em{background:var(--gold);color:var(--on-gold);font-weight:700}
+.day .budget{font-size:11px;color:var(--gold);font-variant-numeric:tabular-nums}
+.chip{--c:var(--gold);display:block;width:100%;font-size:12px;line-height:1.3;padding:5px 8px;border-left:3px solid var(--c);background:var(--gold-soft);background:color-mix(in srgb,var(--c) 14%,transparent);border-radius:2px 6px 6px 2px;overflow:hidden;white-space:normal;color:var(--text)}
+.chip small{display:block;color:var(--muted);font-size:11px;margin-top:1px;font-variant-numeric:tabular-nums}
+.chip .ct{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:normal;word-break:break-all;font-weight:500}
+.chip[data-s]{cursor:pointer;transition:background .15s}
+.chip[data-s]:hover{background:color-mix(in srgb,var(--c) 26%,transparent)}
+.chip.ghost{background:transparent;border-left-style:dashed;color:var(--muted)}
+.chip.k-black{background:#000;border:1px solid #3a3a3a;border-left:3px solid #000;box-shadow:inset 3px 0 0 0 #000}
+.chip.k-black small{color:#9a948a}
+.chip.k-black{color:#f2efe8}
+.chip.k-black[data-s]:hover{background:#111}
+i.k-black{box-shadow:0 0 0 1px #6a6a6a}
+.legend .lg-t{color:var(--muted);font-size:12px}
+.sess{position:relative}
+.sess::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:2px;background:var(--c,transparent)}
+.sess.k-black::before{box-shadow:0 0 0 1px #6a6a6a}
+.pick.host .sw{width:12px;height:12px;border-radius:50%;background:var(--c);display:inline-block}
+.pick.host input:checked + span::before{content:none}
+.pick.off{opacity:.35}
+.pick.off input{cursor:not-allowed}
+.crew{display:block;margin-top:4px;padding-top:4px;border-top:1px solid color-mix(in srgb,var(--c) 30%,transparent)}
+.chip.k-black .crew{border-top-color:#333}
+.cr{display:block;font-size:11px;line-height:1.45;color:var(--text-2);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.chip.k-black .cr{color:#c9c4ba}
+.cr b{display:inline-block;width:15px;font-weight:500;color:var(--muted)}
+.toggle{display:inline-flex;align-items:center;gap:8px;font-size:14px;color:var(--text-2);cursor:pointer;height:40px;padding:0 4px;user-select:none}
+.toggle input{appearance:none;-webkit-appearance:none;width:34px;height:20px;border-radius:999px;background:var(--line-2);position:relative;margin:0;cursor:pointer;transition:background .15s}
+.toggle input::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--text);transition:transform .15s}
+.toggle input:checked{background:var(--gold)}
+.toggle input:checked::after{transform:translateX(14px);background:var(--on-gold)}
+.more{font-size:11px;color:var(--muted);padding-left:4px}
+.dots{display:none}
+
+/* ---------- 側欄 ---------- */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:opacity .2s;z-index:10}
+.scrim.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;height:100%;width:min(560px,100%);background:var(--s1);border-left:1px solid var(--line);box-shadow:var(--shadow);transform:translateX(100%);transition:transform .28s cubic-bezier(.2,.8,.2,1);z-index:11;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
+.drawer.on{transform:none}
+.dr-head{padding:22px 28px 18px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:start}
+.dr-head .back-slot:empty{display:none}
+.dr-head h2{font-family:"Noto Serif TC",serif;margin:0;font-size:24px;line-height:1.25;font-weight:700}
+.dr-head p{margin:4px 0 0;color:var(--muted);font-size:13px}
+.dr-body{flex:1;overflow:auto;padding:22px 28px 28px}
+.dr-foot{border-top:1px solid var(--line);padding:14px 28px calc(14px + env(safe-area-inset-bottom,0px));background:var(--s1);display:none}
+.dr-foot.on{display:block}
+.dr-foot .err{color:var(--danger);font-size:13px;margin:0 0 10px;display:none}
+.dr-foot .err.on{display:block}
+.dr-foot .row{display:flex;gap:8px;align-items:center}
+.dr-foot .row .spacer{flex:1}
+
+/* 檔期卡 */
+.camp{--c:var(--gold);border:1px solid var(--line);border-radius:12px;margin-bottom:16px;background:var(--s2);overflow:hidden;position:relative}
+.camp::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(var(--gold-hi),var(--gold-2))}
+.camp-head{padding:16px 18px 14px 22px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 12px;align-items:flex-start}
+.camp-head>div:first-child{min-width:0;flex:1 1 180px}
+.camp-acts{flex-wrap:wrap}
+.link{background:none;border:0;padding:0;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.link:hover{color:var(--gold-hi)}
+.day-row{display:flex;align-items:center;gap:10px;padding:10px 14px 10px 22px;background:var(--s3);border-top:1px solid var(--line)}
+.day-row:first-child{border-top:0}
+.dr-date{font-family:"Noto Serif TC",serif;font-weight:700;font-size:15px;font-variant-numeric:tabular-nums}
+.dr-date small{font-family:"Noto Sans TC",sans-serif;font-weight:400;font-size:12px;color:var(--muted);margin-left:6px}
+.dr-cnt{flex:1;font-size:12.5px;color:var(--muted)}
+.drawer{overflow:hidden}
+.dr-body{overflow-x:hidden}
+.camp-head h3{margin:0;font-size:18px;font-family:"Noto Serif TC",serif;font-weight:700}
+.camp-head p{margin:3px 0 0;font-size:12.5px;color:var(--muted)}
+.camp-acts{display:flex;gap:6px;flex-shrink:0}
+.sess{border-top:1px solid var(--line);padding:14px 18px 14px 22px;cursor:pointer;transition:background .15s}
+.sess:hover{background:var(--gold-soft)}
+.sess-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.sess-name{font-weight:700;font-size:15.5px}
+.sess .amt{color:var(--gold);font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
+.meta{font-size:12.5px;color:var(--text-2);margin:4px 0 10px;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center}
+.tag{display:inline-block;font-size:11px;padding:1px 9px;border-radius:999px;border:1px solid var(--gold-line);color:var(--gold);font-weight:500}
+.sess dl{display:grid;grid-template-columns:52px 1fr;gap:3px 12px;margin:0;font-size:13px}
+.sess dt{color:var(--muted)} .sess dd{margin:0;word-break:break-word;color:var(--text-2)}
+.sess .acts{display:flex;gap:6px;justify-content:flex-end;margin-top:10px}
+.no-sess{padding:12px 22px 16px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+.add-camp{width:100%;height:48px;border-style:dashed;border-color:var(--gold-line);background:transparent;color:var(--gold)}
+.add-camp:hover{background:var(--gold-soft)}
+.empty-day{text-align:center;padding:36px 12px 28px;color:var(--muted);font-size:14px}
+
+/* 表單 */
+.section{margin-bottom:26px}
+.section h4{font-family:"Noto Serif TC",serif;font-size:16px;font-weight:700;margin:0 0 14px;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:baseline}
+.section h4 small{font-family:"Noto Sans TC",sans-serif;font-weight:400;font-size:12px;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field.full{grid-column:1/-1}
+.field>span{font-size:13px;color:var(--text-2)}
+.field>span em{font-style:normal;color:var(--gold);margin-left:2px}
+.field.bad .select,.field.bad .input{border-color:var(--danger)}
+.hint{font-size:12px;color:var(--muted);margin:0}
+.other-loc{margin-top:8px}
+
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--s3);border:1px solid var(--line-2);border-radius:var(--r);padding:4px;gap:4px}
+.seg label{position:relative;display:block}
+.seg input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.seg span{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 10px;border-radius:7px;font-size:14px;font-weight:500;color:var(--text-2);transition:background .15s,color .15s}
+.seg span small{font-size:11px;color:var(--muted);font-weight:400;font-variant-numeric:tabular-nums}
+.seg input:checked + span{background:var(--s1);color:var(--gold);box-shadow:0 0 0 1px var(--gold-line),0 2px 8px rgba(0,0,0,.25)}
+.seg input:checked + span small{color:var(--text-2)}
+.seg input:focus-visible + span{outline:2px solid var(--gold);outline-offset:1px}
+
+.role{border:0;margin:0 0 16px;padding:0;min-width:0}
+.role legend{font-size:13px;color:var(--text-2);padding:0;margin-bottom:8px}
+.role legend em{font-style:normal;color:var(--gold);margin-left:2px}
+.role legend small{color:var(--muted);margin-left:8px}
+.role.bad legend{color:var(--danger)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.pick{position:relative}
+.pick input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.pick span{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border:1px solid var(--line-2);border-radius:8px;font-size:14px;color:var(--text-2);background:var(--s3);transition:.15s}
+.pick:hover span{border-color:var(--gold-line)}
+.pick input:checked + span{background:var(--gold-soft);border-color:var(--gold);color:var(--gold-hi);font-weight:500}
+.pick input:checked + span::before{content:"✓";font-size:12px}
+.pick input:focus-visible + span{outline:2px solid var(--gold);outline-offset:2px}
+.role .other{display:flex;gap:8px;margin-top:8px}
+.role .other .input{height:36px;font-size:14px}
+
+
+.swatches{display:flex;gap:10px;flex-wrap:wrap}
+.swatches label{position:relative}
+.swatches input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.swatches span{display:block;width:32px;height:32px;border-radius:50%;background:var(--c);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
+.swatches input:checked + span{box-shadow:0 0 0 2px var(--s1),0 0 0 4px var(--text)}
+.swatches input:focus-visible + span{outline:2px solid var(--gold);outline-offset:5px}
+
+/* 對話框 */
+.dlg-back{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:30;padding:20px}
+.dlg-back.on{display:flex}
+.dlg{width:min(420px,100%);background:var(--s2);border:1px solid var(--line-2);border-radius:14px;box-shadow:var(--shadow);padding:24px}
+.dlg h3{font-family:"Noto Serif TC",serif;margin:0 0 10px;font-size:19px}
+.dlg .msg{font-size:14px;color:var(--text-2);white-space:pre-line;margin:0 0 20px;max-height:50vh;overflow:auto}
+.dlg .row{display:flex;gap:8px;justify-content:flex-end}
+.btn.primary.danger-fill{background:var(--danger);border-color:var(--danger);color:#fff;box-shadow:none}
+
+.toast{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(16px);background:var(--s2);color:var(--text);border:1px solid var(--gold-line);padding:11px 20px;border-radius:999px;font-size:14px;opacity:0;transition:.2s;z-index:40;pointer-events:none;box-shadow:var(--shadow)}
+.toast.on{opacity:1;transform:translateX(-50%)}
+
+@media (max-width:820px){
+  .summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .summary div:nth-child(3){border-left:0;padding-left:0}
+  .summary div:nth-child(n+3){border-top:1px solid var(--line)}
+}
+/* ---------- 分頁 ---------- */
+.tabs{display:flex;gap:28px;border-bottom:1px solid var(--line);margin-bottom:0}
+.tabs button{background:none;border:0;padding:16px 0 14px;font-size:15px;font-weight:500;color:var(--muted);position:relative;letter-spacing:.04em}
+.tabs button:hover{color:var(--text)}
+.tabs button[aria-selected="true"]{color:var(--gold-hi)}
+.tabs button[aria-selected="true"]::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--gold)}
+
+/* ---------- 廣告分析 ---------- */
+.ads{padding-top:22px}
+.ads-note{font-size:12.5px;color:var(--muted);margin:0 0 18px}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:22px}
+.kpi{background:var(--s1);padding:18px 20px}
+.kpi span{display:block;font-size:12.5px;color:var(--muted)}
+.kpi b{display:block;font-family:"Noto Serif TC",serif;font-size:28px;line-height:1.25;margin-top:4px;font-variant-numeric:tabular-nums}
+.kpi.gold b{color:var(--gold)}
+.kpi small{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.kpi small span{display:inline}
+.kpi small .up{color:#d9937b}.kpi small .down{color:#7fbf8e}
+.panel{background:var(--s1);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-bottom:18px}
+.panel h3{font-family:"Noto Serif TC",serif;font-size:17px;margin:0 0 4px}
+.panel .sub{font-size:12.5px;color:var(--muted);margin:0 0 16px}
+.ads-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.ads-grid .panel{margin-bottom:0}
+.ads-grid + .panel,.panel + .ads-grid,.ads-grid + .ads-grid{margin-top:18px}
+.ads-grid + .panel{margin-top:18px}
+.insights{margin:0;padding:0;list-style:none;display:grid;gap:10px}
+.insights li{position:relative;padding-left:18px;font-size:14px;color:var(--text-2);line-height:1.6}
+.insights li::before{content:"";position:absolute;left:0;top:.62em;width:6px;height:6px;border-radius:50%;background:var(--gold)}
+.insights b{color:var(--text);font-weight:700}
+.bars{display:grid;gap:14px}
+.bar-row{--c:var(--gold)}
+.bar-top{display:flex;justify-content:space-between;gap:10px;align-items:baseline;font-size:14px}
+.bar-top b{font-weight:500;display:flex;align-items:center;gap:8px;min-width:0}
+.bar-top b i{width:10px;height:10px;border-radius:50%;background:var(--c);flex-shrink:0}
+.bar-top b i.k-black{box-shadow:0 0 0 1px #777}
+.bar-top b em{font-style:normal;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-top span{color:var(--gold);font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.bar-track{height:8px;background:var(--s3);border-radius:999px;margin:7px 0 5px;overflow:hidden}
+.bar-fill{height:100%;background:var(--c);border-radius:999px;min-width:2px}
+.bar-fill.k-black{background:#000;box-shadow:inset 0 0 0 1px #777}
+.bar-meta{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.trend{width:100%;overflow-x:auto}
+.trend svg{display:block;min-width:520px;width:100%;height:auto}
+.trend text{font-size:11px;fill:var(--muted);font-family:"Noto Sans TC",sans-serif}
+.trend .val{fill:var(--text-2);font-size:10.5px}
+.trend .grid{stroke:var(--line);stroke-width:1}
+.trend rect.b{fill:var(--gold)}
+.trend rect.b.next{fill:var(--gold-2);opacity:.6}
+.top-list{margin:0;padding:0;list-style:none;counter-reset:t}
+.top-list li{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:center;padding:11px 0;border-top:1px solid var(--line);counter-increment:t}
+.top-list li:first-child{border-top:0}
+.top-list li::before{content:counter(t);font-family:"Noto Serif TC",serif;font-weight:700;color:var(--gold);font-size:16px}
+.top-list b{display:block;font-size:14px;font-weight:500}
+.top-list small{display:block;font-size:12px;color:var(--muted)}
+.top-list span{color:var(--gold);font-weight:700;font-variant-numeric:tabular-nums}
+.slot-cmp{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.slot-cmp div{background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:14px}
+.slot-cmp h4{margin:0 0 8px;font-size:14px;color:var(--gold)}
+.slot-cmp dl{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;margin:0;font-size:13px}
+.slot-cmp dt{color:var(--muted)}.slot-cmp dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+.dt-wrap{overflow-x:auto;margin:0 -4px}
+.dt{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}
+.dt th{font-weight:500;font-size:12px;color:var(--muted);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line-2);white-space:nowrap}
+.dt td{padding:11px 10px;border-bottom:1px solid var(--line);vertical-align:middle;color:var(--text-2)}
+.dt td b{color:var(--text);font-weight:500}
+.dt tbody tr{cursor:pointer;transition:background .15s}
+.dt tbody tr:hover{background:var(--gold-soft)}
+.dt .r{text-align:right}
+.dt .nw{white-space:nowrap}
+.dt .mut{color:var(--muted)}
+.dt .amt{color:var(--gold);font-weight:700}
+.dt .warn{color:var(--danger);font-weight:500;font-size:12px}
+.dt tfoot td{border-bottom:0;border-top:1px solid var(--line-2);font-weight:700;color:var(--text);padding-top:13px}
+.hd{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--c);margin-right:7px;vertical-align:1px}
+.hd.k-black{box-shadow:0 0 0 1px #777}
+.ads-empty{text-align:center;padding:56px 16px;color:var(--muted)}
+.ads-empty b{display:block;font-family:"Noto Serif TC",serif;font-size:18px;color:var(--text);margin-bottom:6px}
+
+/* ---------- 手機版議程列表 ---------- */
+.agenda{display:none}
+.ag-day{margin-top:18px}
+.ag-head{display:flex;align-items:baseline;gap:8px;padding:0 2px 8px;border-bottom:1px solid var(--line);margin-bottom:8px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);z-index:1;padding-top:6px}
+.ag-head b{font-family:"Noto Serif TC",serif;font-size:18px;font-variant-numeric:tabular-nums}
+.ag-head span{font-size:12.5px;color:var(--muted)}
+.ag-head .amt{margin-left:auto;color:var(--gold);font-size:13px;font-variant-numeric:tabular-nums}
+.ag-head.today b{color:var(--gold)}
+.ag-item{--c:var(--gold);display:block;width:100%;text-align:left;background:var(--s2);border:1px solid var(--line);border-left:4px solid var(--c);border-radius:4px 12px 12px 4px;padding:12px 14px;margin-bottom:8px;color:var(--text)}
+.ag-item.k-black{border-left:1px solid var(--line);padding-left:19px;background:linear-gradient(90deg,#777 0 1px,#000 1px 5px,#777 5px 6px,transparent 6px),var(--s2)}
+.ag-item:active{background:var(--s3)}
+.ag-top{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.ag-top b{font-size:16px;font-weight:700;line-height:1.35}
+.ag-top .amt{color:var(--gold);font-weight:700;font-size:14px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.ag-meta{font-size:13px;color:var(--text-2);margin:4px 0 8px;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center}
+.ag-meta .camp-n{color:var(--muted)}
+.ag-crew{display:grid;grid-template-columns:20px 1fr;gap:2px 8px;font-size:13px}
+.ag-crew dt{color:var(--muted)} .ag-crew dd{margin:0;color:var(--text-2);word-break:break-word}
+.ag-empty{text-align:center;color:var(--muted);font-size:14px;padding:28px 0}
+
+@media (max-width:720px){
+  .wrap{padding:16px 14px calc(96px + env(safe-area-inset-bottom,0px))}
+  .top{grid-template-columns:1fr auto;gap:12px;padding-bottom:16px}
+  .brand{font-size:12px;margin-bottom:6px}
+  .month-title .mo{font-size:40px}
+  .month-title .yr{font-size:13px}
+  .nav{gap:6px}
+  .btn{height:44px}
+  .btn.icon{width:44px}
+  #todayBtn{padding:0 12px}
+  .summary{grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:16px}
+  .summary div{padding:12px 0 12px 14px}
+  .summary div:nth-child(odd){border-left:0;padding-left:0}
+  .summary div:nth-child(n+3){border-top:1px solid var(--line)}
+  .summary b{font-size:21px}
+  .topbar{margin:-4px 0 8px}
+  .topbar .btn.sm{height:36px}
+  .toolbar{gap:8px}
+  .toolbar{flex-direction:column;align-items:stretch;gap:10px}
+  .tb-actions{order:-1;margin-left:0;justify-content:space-between}
+  .tb-sep{display:none}
+  .hchips{flex-wrap:nowrap;overflow-x:auto;margin:0 -14px;padding:2px 14px;scrollbar-width:none;width:calc(100% + 28px)}
+  .hchips::-webkit-scrollbar{display:none}
+  .hchips{gap:6px}
+  .hchip{height:40px;font-size:14.5px;padding:0 11px;gap:6px}
+
+  .toggle{height:44px}
+  #addCamp{position:fixed;right:16px;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:9;height:52px;padding:0 22px;border-radius:999px;font-size:15px;box-shadow:0 10px 30px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.25)}
+  .cal-frame{border-radius:12px}
+  .day{min-height:50px;padding:5px 2px;gap:3px;align-items:center}
+  .day .chip,.day .more,.day .budget{display:none}
+  .day .num{justify-content:center;margin:0}
+  .day .num em{min-width:28px;height:28px;font-size:14px}
+  .dots{display:flex;gap:3px;justify-content:center;flex-wrap:wrap}
+  .dots i{width:6px;height:6px;border-radius:50%;background:var(--c)}
+  .dow{padding:8px 2px;text-align:center;font-size:11px}
+  .agenda{display:block}
+  .tabs{gap:0}
+  .tabs button{flex:1;text-align:center;padding:14px 0 12px}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .kpi{padding:14px}
+  .kpi b{font-size:21px}
+  .ads-grid{grid-template-columns:1fr;gap:14px}
+  .panel{padding:16px}
+  /* 明細表改精簡卡片 */
+  .dt-wrap{margin:0;overflow:visible}
+  .dt thead{display:none}
+  .dt,.dt tbody,.dt tfoot{display:block;width:100%}
+  .dt tbody tr{display:flex;flex-wrap:wrap;align-items:baseline;gap:3px 10px;border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin-bottom:8px;background:var(--s2)}
+  .dt td{border:0;padding:0;font-size:12.5px;white-space:nowrap}
+  .dt td[data-l="場次名稱"]{order:1;flex:1 1 calc(100% - 120px);min-width:0;font-size:15px;white-space:normal}
+  .dt td[data-l="廣告預算"]{order:2;flex:0 0 100px;text-align:right;font-size:15px}
+  .dt td[data-l="直播日期"]{order:3;color:var(--text-2)}
+  .dt td[data-l="直播主"]{order:4;color:var(--text-2)}
+  .dt td[data-l="時段"]{order:5;color:var(--text-2)}
+  .dt td[data-l="檔期"]{order:6;flex-basis:100%;font-size:12px}
+  .dt tfoot tr{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;padding:12px 13px;border:1px solid var(--gold-line);border-radius:10px;background:var(--gold-soft)}
+  .dt tfoot td{border:0;padding:0;font-size:13px}
+
+  /* 側欄改為全螢幕 */
+  .drawer{width:100%;border-left:0}
+  .dr-head{padding:16px 16px 12px;gap:8px}
+  .dr-head h2{font-size:20px}
+  .dr-body{padding:16px 16px 24px}
+  .dr-foot{padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px))}
+  .dr-foot .row{flex-wrap:wrap}
+  .dr-foot .row .btn{flex:1 1 auto}
+  .dr-foot .row .spacer{display:none}
+  .grid2{grid-template-columns:1fr;gap:14px}
+  .camp-head{padding:14px 14px 12px 18px}
+  .camp-acts{width:100%}
+  .camp-acts .btn{flex:1}
+  .btn.sm{height:38px;font-size:13.5px}
+  .sess{padding:14px 14px 14px 18px}
+  .day-row{padding:10px 12px 10px 18px}
+  /* 避免 iOS 聚焦輸入框時自動放大：字級需 ≥16px */
+  .select,.input{height:48px;font-size:16px}
+  .role .other .input{height:44px;font-size:16px}
+  .pick span{height:40px;padding:0 14px;font-size:15px}
+  .seg span{padding:10px 8px;font-size:15px}
+  .swatches span{width:36px;height:36px}
+  .dlg{padding:20px}
+  .dlg .row .btn{flex:1}
+  .toast{bottom:calc(84px + env(safe-area-inset-bottom,0px));max-width:calc(100% - 32px);text-align:center}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <span class="status" id="status">連線中</span>
+    <button class="btn sm" id="htmlBtn">匯出網頁</button>
+    <button class="btn sm" id="exportBtn">匯出 CSV</button>
+    <button class="btn sm" id="jsonBtn">備份資料</button>
+    <button class="btn sm outline" id="connBtn">資料連線</button>
+  </div>
+  <header class="top">
+    <div>
+      <p class="brand">直播檔期行事曆</p>
+      <h1 class="month-title" aria-live="polite"><span class="mo" id="mo"></span><span class="yr" id="yr"></span></h1>
+    </div>
+    <div class="nav">
+      <button class="btn icon" id="prev" aria-label="上個月">‹</button>
+      <button class="btn" id="todayBtn">本月</button>
+      <button class="btn icon" id="next" aria-label="下個月">›</button>
+    </div>
+  </header>
+  <nav class="tabs" role="tablist" aria-label="頁面切換">
+    <button role="tab" id="tab-cal" data-tab="cal" aria-selected="true">檔期行事曆</button>
+    <button role="tab" id="tab-ads" data-tab="ads" aria-selected="false">廣告分析</button>
+  </nav>
+  <div id="paneCal" role="tabpanel" aria-labelledby="tab-cal">
+
+  <section class="summary" aria-label="本月統計">
+    <div><b id="sCamp">0</b><span>本月開播檔期</span></div>
+    <div><b id="sCount">0</b><span>本月開播場次</span></div>
+    <div class="money"><b id="sBudget">$0</b><span>本月廣告預算</span></div>
+    <div class="money"><b id="sAvg">$0</b><span>每場平均預算</span></div>
+  </section>
+
+  <div id="legacy"></div>
+
+  <div class="toolbar">
+    <div class="hchips" id="hostChips" role="radiogroup" aria-label="依直播主篩選（顏色即月曆色條）"></div>
+    <div class="tb-actions">
+      <label class="toggle"><input type="checkbox" id="crewToggle"><span>顯示人員</span></label>
+      <span class="tb-sep" aria-hidden="true"></span>
+      <button class="btn" id="manageBtn">檔期管理</button>
+      <button class="btn primary" id="addCamp">＋ 新增檔期</button>
+    </div>
+  </div>
+  <div class="cal-frame"><div class="cal" id="cal" role="grid"></div></div>
+  <section class="agenda" id="agenda" aria-label="本月場次列表"></section>
+  </div>
+  <div id="paneAds" role="tabpanel" aria-labelledby="tab-ads" hidden></div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-hidden="true" aria-labelledby="drTitle">
+  <div class="dr-head">
+    <div class="back-slot" id="backSlot"></div>
+    <div><h2 id="drTitle"></h2><p id="drSub"></p></div>
+    <button class="btn icon quiet" id="closeDr" aria-label="關閉">✕</button>
+  </div>
+  <div class="dr-body" id="drBody"></div>
+  <div class="dr-foot" id="drFoot">
+    <p class="err" id="err" role="alert"></p>
+    <div class="row" id="footRow"></div>
+  </div>
+</aside>
+
+<div class="dlg-back" id="dlg" role="dialog" aria-modal="true" aria-labelledby="dlgT">
+  <div class="dlg"><h3 id="dlgT"></h3><p class="msg" id="dlgM"></p>
+    <div class="row"><button class="btn quiet" id="dlgNo">取消</button><button class="btn primary" id="dlgOk">確定</button></div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+  /* ================= 設定 ================= */
+  const SLOTS={
+    // from/to：可選範圍；defFrom/defTo：切換場別時的預設時間
+    // 跨午夜以 24:00 以上表示（25:00 = 隔日 01:00），排序與撞期檢查才會正確
+    noon :{l:"午場",from:"11:00",to:"17:00",defFrom:"12:00",defTo:"16:00"},
+    night:{l:"晚場",from:"19:00",to:"25:00",defFrom:"20:00",defTo:"24:00"}
+  };
+  const STEP=30;
+  const LOCATIONS=["MOOD光明廠","品牌方廠播","廣州","泰國","日本"];
+  const OTHER="__other__";
+  const PALETTE=["#cdb07a","#d0849a","#5fb0a6","#7894d8","#a487d0","#d9935f","#9cb35c","#b9b2a6"];
+  const ROLES=[
+    {k:"coHost",    l:"副播",   opts:["丸子","酸菜","黑黑","大佩","丹丹","凡凡"]},
+    {k:"assistant", l:"助播",   opts:["大佩","丹丹","凡凡","小霈","雪芳","廣義"]},
+    {k:"orders",    l:"收單",   opts:["小霈","丹丹","雪芳","凡凡","黑黑","酸菜"]},
+    {k:"shills",    l:"水軍",   opts:["如如","米雅","小P","文妤","廣義"]}
+  ];
+  // 直播主：單選必填，決定月曆色條顏色
+  const HOSTS_A=[
+    {n:"丸子",c:"#e8c547",l:"黃"},
+    {n:"酸菜",c:"#4f8be0",l:"藍"},
+    {n:"黑黑",c:"#000000",l:"黑"},
+    {n:"大佩",c:"#ec93b5",l:"粉"}
+  ];
+  const NEUTRAL="#8a847a";
+  const hostColor=n=>(HOSTS_A.find(h=>h.n===n)||{}).c||NEUTRAL;
+  const REQ={coHost:"副播／助播擇一",assistant:"副播／助播擇一",orders:"必填",shills:"必填"};
+  const RULES=[
+    {test:e=>e.coHost.length+e.assistant.length>0, roles:["coHost","assistant"], msg:"副播或助播至少要有 1 位"},
+    {test:e=>e.orders.length>0,                    roles:["orders"],             msg:"請至少選 1 位收單"},
+    {test:e=>e.shills.length>0,                    roles:["shills"],             msg:"請至少選 1 位水軍"}
+  ];
+  const MAX_DAYS=92;
+  const LS_KEY="live-calendar-v2";
+
+  /* ================= 工具 ================= */
+  const $=id=>document.getElementById(id);
+  const pad=n=>String(n).padStart(2,"0");
+  const ymd=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+  const parse=s=>{const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)};
+  const md=s=>{const d=parse(s);return (d.getMonth()+1)+"/"+d.getDate()};
+  const money=n=>"$"+Math.round(n||0).toLocaleString("zh-TW");
+  const DOW=["日","一","二","三","四","五","六"];
+  const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const toMin=t=>{if(!t)return null;const [h,m]=String(t).split(":").map(Number);return h*60+m};
+  const fmt=m=>pad(Math.floor(m/60))+":"+pad(m%60);
+  const toArr=v=>Array.isArray(v)?v.map(String).filter(Boolean):String(v||"").split(/[,，、]\s*/).map(x=>x.trim()).filter(Boolean);
+  const join=a=>a&&a.length?a.join("、"):"—";
+  const newId=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+  const datesBetween=(a,b)=>{const out=[];const d=parse(a),e=parse(b);while(d<=e&&out.length<400){out.push(ymd(d));d.setDate(d.getDate()+1)}return out};
+  const dayDiff=(a,b)=>Math.round((parse(b)-parse(a))/864e5);
+  const isDate=s=>/^\d{4}-\d{2}-\d{2}$/.test(s||"");
+  const dowOf=s=>DOW[parse(s).getDay()];
+  function normSess(raw){
+    const s=Object.assign({},raw);
+    ROLES.forEach(r=>s[r.k]=toArr(raw[r.k]));
+    s.budget=+raw.budget||0;
+    s.slot=SLOTS[raw.slot]?raw.slot:"night";
+    s.title=raw.title||""; s.location=raw.location||"";
+    s.hostA=raw.hostA!==undefined?String(raw.hostA||""):(toArr(raw.host)[0]||"");   // 舊資料：第一位為直播主
+    delete s.hostB;
+    s.host=[s.hostA].filter(Boolean);    // 衍生欄位，僅供篩選與撞期檢查
+    delete s.color;
+    return s;
+  }
+  // 寫入雲端前清掉 undefined，避免儲存被拒
+  const clean=o=>JSON.parse(JSON.stringify(o));
+
+  /* ---- 自製確認視窗（內嵌頁面中瀏覽器 confirm() 可能被封鎖） ---- */
+  function ask(title,msg,ok="確定",danger=false){
+    return new Promise(res=>{
+      const d=$("dlg");$("dlgT").textContent=title;$("dlgM").textContent=msg;
+      const okB=$("dlgOk");okB.textContent=ok;okB.classList.toggle("danger-fill",danger);
+      d.classList.add("on");setTimeout(()=>okB.focus(),30);
+      const done=v=>{d.classList.remove("on");okB.onclick=$("dlgNo").onclick=null;d.onkeydown=null;res(v)};
+      okB.onclick=()=>done(true);$("dlgNo").onclick=()=>done(false);
+      d.onkeydown=e=>{if(e.key==="Escape"){e.stopPropagation();done(false)}};
+      d.onclick=e=>{if(e.target===d)done(false)};
+    });
+  }
+
+  /* ================= 狀態與儲存 ================= */
+  let view=new Date(); view.setDate(1);
+  let campaigns=[], sessions=[], legacy=[];
+  let cCol=null, sCol=null, lCol=null, downloads=null, readOnly=false;
+  let selDate=null, mode="day";
+
+  function loadLocal(){try{const r=JSON.parse(localStorage.getItem(LS_KEY)||"{}");campaigns=r.campaigns||[];sessions=(r.sessions||[]).map(normSess)}catch(e){}}
+  function saveLocal(){try{localStorage.setItem(LS_KEY,JSON.stringify({campaigns,sessions}))}catch(e){}}
+  loadLocal();
+  const setStatus=(t,ok)=>{$("status").textContent=t;$("status").classList.toggle("ok",!!ok)};
+  setStatus("僅存於此瀏覽器");
+
+  /* ================= Google 試算表連線（Apps Script） ================= */
+  const API_KEY="lc-api",TOKEN_KEY="lc-token";
+  let api="",token="";
+  try{api=localStorage.getItem(API_KEY)||"";token=localStorage.getItem(TOKEN_KEY)||""}catch(e){}
+  // 獨立網頁版：檔案下載改用瀏覽器原生方式
+  downloads={save:async({filename,data})=>{const u=URL.createObjectURL(data);const a=document.createElement("a");a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),3000)}};
+  async function apiGet(url=api,tk=token){
+    const r=await fetch(url+(url.includes("?")?"&":"?")+"token="+encodeURIComponent(tk)+"&t="+Date.now());
+    const j=await r.json();if(!j.ok)throw Object.assign(new Error(j.error),{code:j.error});return j;
+  }
+  async function apiPost(body){
+    // 以 text/plain 傳送，避免瀏覽器跨網域預檢（Apps Script 不支援 OPTIONS）
+    const r=await fetch(api,{method:"POST",body:JSON.stringify(Object.assign({token},body))});
+    const j=await r.json();if(!j.ok)throw Object.assign(new Error(j.error),{code:j.error});return j;
+  }
+  let syncing=false,lastSync=0;
+  async function pull(quiet){
+    if(!api||syncing)return;
+    syncing=true;if(!quiet)setStatus("同步中…");
+    try{
+      const j=await apiGet();
+      campaigns=j.campaigns||[];sessions=(j.sessions||[]).map(normSess);
+      saveLocal();lastSync=Date.now();
+      setStatus("已連線 Google 試算表",true);
+      render();
+      if(selDate&&mode==="day")renderDay();if(selDate&&mode==="manage")renderManage();if(selDate&&mode==="campView")renderCampView(home.id,home.prev);
+    }catch(e){setStatus(e.code==="token"?"試算表密碼錯誤":"無法連線試算表，暫用本機資料")}
+    finally{syncing=false}
+  }
+  if(api){setStatus("同步中…");pull()}else setStatus("僅存於此瀏覽器（未連線試算表）");
+  // 多人共用：每 30 秒、切回頁面時自動更新
+  setInterval(()=>{if(document.visibilityState==="visible")pull(true)},30000);
+  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&Date.now()-lastSync>10000)pull(true)});
+
+  async function put(kind,obj){
+    obj=clean(obj);
+    if(kind==="s"){delete obj.host;delete obj.hostB}
+    if(api)await apiPost({action:"put",kind,obj});
+    const arr=kind==="c"?campaigns:sessions;
+    const v=kind==="s"?normSess(obj):obj;
+    const i=arr.findIndex(x=>x.id===obj.id);if(i>=0)arr[i]=v;else arr.push(v);
+    saveLocal();render();
+  }
+  async function del(kind,id){
+    // 刪除檔期時，試算表端會一併刪除底下場次；這裡略過逐筆刪除的請求
+    if(api&&!(kind==="s"&&deletingCamp))await apiPost({action:"del",kind,id});
+    if(kind==="c"){campaigns=campaigns.filter(x=>x.id!==id);sessions=sessions.filter(x=>x.campaignId!==id)}
+    else sessions=sessions.filter(x=>x.id!==id);
+    saveLocal();render();
+  }
+  let deletingCamp=false;
+  const errText=err=>err&&err.code==="token"?"試算表密碼錯誤，請到「資料連線」重新設定。":"儲存失敗，請確認網路或試算表連線。"+(err&&err.code?`（${err.code}）`:"");
+
+  /* ---- 舊格式轉換 ---- */
+  function renderLegacy(){
+    $("legacy").innerHTML=(legacy.length&&!readOnly)?`<div class="banner"><span>有 ${legacy.length} 筆舊格式資料，轉換後會變成單日檔期與 1 個未設定時間的晚場。</span><button class="btn outline sm" id="migrate">轉換舊資料</button></div>`:"";
+  }
+  $("legacy").addEventListener("click",async e=>{
+    if(e.target.id!=="migrate")return;
+    e.target.disabled=true;
+    try{
+      for(const L of legacy){
+        const cid=newId("c");
+        await put("c",{id:cid,name:L.name||"未命名檔期",start:L.date,end:L.date,createdAt:L.createdAt||Date.now()});
+        await put("s",normSess(Object.assign({},L,{id:newId("s"),campaignId:cid,date:L.date,slot:"night",start:"",end:"",createdAt:Date.now()})));
+        await lCol.doc(L.id).delete();
+      }
+      toast("舊資料已轉換");
+    }catch(err){toast("轉換失敗，請稍後再試");e.target.disabled=false}
+  });
+
+  /* ================= 查詢 ================= */
+  let hostSel="";
+  const hostF=()=>hostSel;
+  const sessOK=s=>!hostF()||s.host.includes(hostF());
+  const campOn=d=>campaigns.filter(c=>c.start<=d&&d<=c.end).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+  const sessOf=(cid,d)=>sessions.filter(s=>s.campaignId===cid&&(!d||s.date===d)).sort((a,b)=>(toMin(a.start)??9999)-(toMin(b.start)??9999));
+  const hashIdx=id=>{let h=0;for(const ch of String(id))h=(h*31+ch.charCodeAt(0))>>>0;return h%PALETTE.length};
+  const colorOf=c=>c&&c.color||PALETTE[hashIdx(c?c.id:"")];
+  function nextColor(){const used=campaigns.map(colorOf);return PALETTE.slice().sort((a,b)=>used.filter(x=>x===a).length-used.filter(x=>x===b).length)[0]}
+  const sessTitle=(s,c)=>s.title||"未命名場次";
+  const disp=t=>{const m=toMin(t);if(m==null)return "";return m>1440?fmt(m-1440)+"（隔日）":fmt(m)};
+  const timeLabel=s=>s.start&&s.end?`${disp(s.start)}–${disp(s.end)}`:"時間未設定";
+  const rangeLabel=c=>md(c.start)+(c.end!==c.start?" – "+md(c.end):"");
+
+  /* ================= 月曆 ================= */
+  // 簡易人員配置：主（直播主）、副、助、收、水（皆顯示人名）
+  const CREW=[
+    {l:"主",get:s=>[s.hostA].filter(Boolean)},
+    {l:"副",get:s=>s.coHost},
+    {l:"助",get:s=>s.assistant},
+    {l:"收",get:s=>s.orders},
+    {l:"水",get:s=>s.shills}
+  ];
+  let showCrew=true;try{showCrew=localStorage.getItem("lc-crew")!=="0"}catch(e){}
+  function crewHTML(s){
+    if(!showCrew)return "";
+    const rows=CREW.map(r=>{const a=r.get(s)||[];if(!a.length)return "";return `<span class="cr"><b>${r.l}</b>${esc(r.count?a.length+" 人":a.join("、"))}</span>`}).join("");
+    return rows?`<span class="crew">${rows}</span>`:"";
+  }
+  function refreshHosts(){
+    const extra=[...new Set(sessions.map(s=>s.hostA).filter(n=>n&&!HOSTS_A.some(h=>h.n===n)))];
+    const list=[...HOSTS_A,...extra.map(n=>({n,c:NEUTRAL}))];
+    if(hostSel&&!list.some(h=>h.n===hostSel))hostSel="";
+    $("hostChips").innerHTML=`<button class="hchip${hostSel?"":" on"}" data-h="" role="radio" aria-checked="${!hostSel}">全部</button>`+
+      list.map(h=>`<button class="hchip${hostSel===h.n?" on":""}" data-h="${esc(h.n)}" role="radio" aria-checked="${hostSel===h.n}"><i class="${h.c==="#000000"?"k-black":""}" style="--c:${h.c}"></i>${esc(h.n)}</button>`).join("");
+  }
+  function render(){
+    refreshHosts();
+    const y=view.getFullYear(),m=view.getMonth();
+    $("mo").innerHTML=(m+1)+"<small>月</small>"; $("yr").textContent=y;
+    const today=ymd(new Date());
+    const start=new Date(y,m,1-new Date(y,m,1).getDay());
+    let html=DOW.map((d,i)=>`<div class="dow${i===0||i===6?" we":""}" role="columnheader">${d}</div>`).join("");
+    for(let i=0;i<42;i++){
+      const d=new Date(start);d.setDate(start.getDate()+i);
+      if(i>=35&&d.getMonth()!==m)break;
+      const k=ymd(d);
+      const items=[],dots=[];let bud=0,count=0;
+      campOn(k).forEach(c=>{
+        const ss=sessOf(c.id,k).filter(sessOK);
+        ss.forEach(s=>{const col=hostColor(s.hostA);bud+=s.budget;count++;dots.push(col);items.push(`<span class="chip${col==="#000000"?" k-black":""}" data-s="${s.id}" style="--c:${col}" title="${esc(c.name)}｜直播主：${esc(s.hostA||"未設定")}｜${esc(timeLabel(s))}｜點擊編輯"><span class="ct">${esc(s.title||"未命名場次")}</span><small>${esc(timeLabel(s))}</small>${crewHTML(s)}</span>`)});
+      });
+      html+=`<button class="day${d.getMonth()!==m?" out":""}${k===today?" today":""}" data-d="${k}" aria-label="${d.getMonth()+1}月${d.getDate()}日，${count}個場次">
+        <span class="num"><em>${d.getDate()}</em>${bud?`<span class="budget">${money(bud)}</span>`:""}</span>
+        ${items.slice(0,3).join("")}${items.length>3?`<span class="more">另有 ${items.length-3} 筆</span>`:""}
+        ${count?`<span class="dots">${dots.slice(0,4).map(c=>`<i class="${c==="#000000"?"k-black":""}" style="--c:${c}"></i>`).join("")}</span>`:""}
+      </button>`;
+    }
+    $("cal").innerHTML=html;
+    // 統計歸屬：檔期一律歸在「開始日期」所在月份；跨月檔期的後續場次也算在開始月份
+    const prefix=y+"-"+pad(m+1);
+    const mc=campaigns.filter(c=>c.start&&c.start.startsWith(prefix));
+    const mcIds=new Set(mc.map(c=>c.id));
+    const ms=sessions.filter(s=>mcIds.has(s.campaignId)&&sessOK(s));
+    const total=ms.reduce((a,s)=>a+s.budget,0);
+    $("sCamp").textContent=mc.length;            // 同一檔期不論場次、天數、直播主人數只算 1 檔
+    $("sCount").textContent=ms.length;
+    $("sBudget").textContent=money(total);
+    $("sAvg").textContent=money(ms.length?total/ms.length:0);
+    renderAgenda(y,m);
+    if(tab==="ads")renderAds(y,m);
+  }
+  /* ================= 分頁 ================= */
+  let tab="cal";try{if(localStorage.getItem("lc-tab")==="ads")tab="ads"}catch(e){}
+  function setTab(t){
+    tab=t;try{localStorage.setItem("lc-tab",t)}catch(e){}
+    document.querySelectorAll(".tabs [data-tab]").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.tab===t)));
+    $("paneCal").hidden=t!=="cal";$("paneAds").hidden=t!=="ads";
+    render();
+  }
+  document.querySelector(".tabs").addEventListener("click",e=>{const b=e.target.closest("[data-tab]");if(b)setTab(b.dataset.tab)});
+
+  /* ================= 廣告分析 ================= */
+  // 歸屬規則與表頭統計一致：以檔期開始日期所在月份為準
+  function monthData(y,m){
+    const prefix=y+"-"+pad(m+1);
+    const mc=campaigns.filter(c=>c.start&&c.start.startsWith(prefix));
+    const ids=new Set(mc.map(c=>c.id));
+    const ms=sessions.filter(s=>ids.has(s.campaignId));
+    return {prefix,mc,ms};
+  }
+  const hrs=s=>{const a=toMin(s.start),b=toMin(s.end);return a!=null&&b!=null&&b>a?(b-a)/60:0};
+  const sum=(a,f)=>a.reduce((t,x)=>t+f(x),0);
+  const pct=(a,b)=>b?Math.round(a/b*1000)/10:0;
+  const fmtH=h=>(Math.round(h*10)/10).toLocaleString("zh-TW");
+  function groupBy(ms,key){
+    const g={};ms.forEach(s=>{const k=key(s)||"未設定";(g[k]=g[k]||[]).push(s)});
+    return Object.entries(g).map(([k,a])=>({k,a,b:sum(a,x=>x.budget),h:sum(a,hrs),n:a.length})).sort((x,y)=>y.b-x.b||y.n-x.n);
+  }
+  function barRows(groups,total,colorFn){
+    const max=Math.max(1,...groups.map(g=>g.b));
+    return `<div class="bars">${groups.map(g=>{const c=colorFn?colorFn(g.k):"var(--gold)";const kb=c==="#000000"?" k-black":"";
+      return `<div class="bar-row" style="--c:${c}">
+        <div class="bar-top"><b>${colorFn?`<i class="${kb.trim()}"></i>`:""}<em>${esc(g.k)}</em></b><span>${money(g.b)}</span></div>
+        <div class="bar-track"><div class="bar-fill${kb}" style="width:${g.b/max*100}%"></div></div>
+        <div class="bar-meta">占 ${pct(g.b,total)}%・${g.n} 場・每場 ${money(g.n?g.b/g.n:0)}${g.h?`・每小時 ${money(g.b/g.h)}`:""}</div>
+      </div>`}).join("")}</div>`;
+  }
+  function trendSVG(ms,prefix){
+    const byDay={};ms.forEach(s=>byDay[s.date]=(byDay[s.date]||0)+s.budget);
+    const [y,m]=prefix.split("-").map(Number);
+    const last=new Date(y,m,0).getDate();
+    let days=[];for(let d=1;d<=last;d++)days.push(prefix+"-"+pad(d));
+    Object.keys(byDay).filter(d=>!d.startsWith(prefix)).sort().forEach(d=>days.push(d));   // 跨月檔期的次月場次
+    const W=Math.max(520,days.length*22),H=200,pl=8,pr=8,pt=22,pb=28,iw=W-pl-pr,ih=H-pt-pb;
+    const max=Math.max(1,...Object.values(byDay));
+    const bw=iw/days.length;
+    let g=[0.5,1].map(f=>`<line class="grid" x1="${pl}" x2="${W-pr}" y1="${pt+ih*(1-f)}" y2="${pt+ih*(1-f)}"/>`).join("")+`<line class="grid" x1="${pl}" x2="${W-pr}" y1="${pt+ih}" y2="${pt+ih}"/>`;
+    days.forEach((d,i)=>{
+      const v=byDay[d]||0,h=v/max*ih,x=pl+i*bw+bw*.18,w=bw*.64,next=!d.startsWith(prefix);
+      if(v)g+=`<rect class="b${next?" next":""}" x="${x}" y="${pt+ih-h}" width="${w}" height="${h}" rx="2"><title>${md(d)}：${money(v)}</title></rect>`;
+      if(v&&v===max)g+=`<text class="val" x="${x+w/2}" y="${pt+ih-h-6}" text-anchor="middle">${money(v)}</text>`;
+      const dd=+d.slice(8);
+      if(next||dd===1||dd%5===0||v)g+=`<text x="${x+w/2}" y="${H-10}" text-anchor="middle">${next?md(d):dd}</text>`;
+    });
+    return `<div class="trend"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="每日廣告費用">${g}</svg></div>`;
+  }
+  function renderAds(y,m){
+    const {prefix,mc,ms}=monthData(y,m);
+    const pd=new Date(y,m-1,1),prev=monthData(pd.getFullYear(),pd.getMonth());
+    const total=sum(ms,s=>s.budget),ptotal=sum(prev.ms,s=>s.budget);
+    const H=sum(ms,hrs),n=ms.length,funded=ms.filter(s=>s.budget>0);
+    const top=ms.slice().sort((a,b)=>b.budget-a.budget)[0];
+    const note=`統計範圍：開始日期在 ${y} 年 ${m+1} 月的 ${mc.length} 個檔期（跨月檔期的後續場次一併計入）`;
+    if(!n){$("paneAds").innerHTML=`<div class="ads"><p class="ads-note">${note}</p><div class="ads-empty"><b>本月尚無場次資料</b>建立檔期並新增場次、填入本場廣告預算後，這裡會自動產生分析。</div></div>`;return}
+    let mom="";
+    if(ptotal){const d=pct(total-ptotal,ptotal);mom=`較上月 <span class="${d>0?"up":"down"}">${d>0?"▲":"▼"} ${Math.abs(d)}%</span>（${money(ptotal)}）`}
+    else mom="上月無資料可比較";
+    const byHost=groupBy(ms,s=>s.hostA),
+          byCamp=groupBy(ms,s=>(campaigns.find(c=>c.id===s.campaignId)||{}).name);
+    // 重點觀察
+    const ins=[];
+    if(byHost[0]&&total)ins.push(`預算最集中在 <b>${esc(byHost[0].k)}</b>，${byHost[0].n} 場共 ${money(byHost[0].b)}，占本月 <b>${pct(byHost[0].b,total)}%</b>。`);
+    if(top&&top.budget)ins.push(`單場最高為「${esc(top.title||"未命名場次")}」（${md(top.date)}，${esc(top.hostA||"")}），預算 <b>${money(top.budget)}</b>，為每場平均的 ${(top.budget/(total/n)).toFixed(1)} 倍。`);
+    const zero=n-funded.length;
+    if(zero)ins.push(`有 <b>${zero} 場</b>未填廣告預算，可能低估本月實際費用，建議補齊。`);
+    if(ptotal)ins.push(`本月廣告總額 ${money(total)}，${total>=ptotal?"增加":"減少"} ${money(Math.abs(total-ptotal))}（${pct(Math.abs(total-ptotal),ptotal)}%）。`);
+    // 各直播場次明細（依日期、開始時間排序）
+    const rows=ms.slice().sort((a,b)=>a.date.localeCompare(b.date)||(toMin(a.start)??0)-(toMin(b.start)??0));
+    const campName=s=>(campaigns.find(c=>c.id===s.campaignId)||{}).name||"";
+    const detail=`<div class="dt-wrap"><table class="dt">
+      <thead><tr><th>直播日期</th><th>場次名稱</th><th>檔期</th><th>直播主</th><th>時段</th><th class="r">廣告預算</th></tr></thead>
+      <tbody>${rows.map(s=>{const h=hrs(s),col=hostColor(s.hostA);return `<tr data-s="${s.id}" data-d="${s.date}" tabindex="0">
+        <td class="nw" data-l="直播日期">${md(s.date)} 週${dowOf(s.date)}</td>
+        <td data-l="場次名稱"><b>${esc(s.title||"未命名場次")}</b></td>
+        <td data-l="檔期" class="mut">${esc(campName(s))}</td>
+        <td data-l="直播主" class="nw"><i class="hd${col==="#000000"?" k-black":""}" style="--c:${col}"></i>${esc(s.hostA||"—")}</td>
+        <td data-l="時段" class="nw">${SLOTS[s.slot].l} ${timeLabel(s)}</td>
+        <td data-l="廣告預算" class="r amt">${s.budget?money(s.budget):`<span class="warn">未填</span>`}</td>
+      </tr>`}).join("")}</tbody>
+      <tfoot><tr><td colspan="5">合計 ${n} 場</td><td class="r amt">${money(total)}</td></tr></tfoot>
+    </table></div>`;
+    $("paneAds").innerHTML=`<div class="ads">
+      <p class="ads-note">${note}</p>
+      <div class="kpis">
+        <div class="kpi gold"><span>本月廣告總額</span><b>${money(total)}</b><small>${mom}</small></div>
+        <div class="kpi"><span>開播場次</span><b>${n}</b><small>已填預算 ${funded.length} 場</small></div>
+        <div class="kpi gold"><span>每場平均預算</span><b>${money(total/n)}</b><small>已填預算場次平均 ${money(funded.length?total/funded.length:0)}</small></div>
+        <div class="kpi"><span>直播總時數</span><b>${fmtH(H)}<span style="display:inline;font-size:14px;color:var(--muted)"> 小時</span></b><small>平均每場 ${fmtH(H/n)} 小時</small></div>
+        <div class="kpi gold"><span>每小時廣告成本</span><b>${money(H?total/H:0)}</b><small>廣告總額 ÷ 直播總時數</small></div>
+        <div class="kpi"><span>單場最高預算</span><b>${money(top?top.budget:0)}</b><small>${top?esc(top.title||"未命名場次"):""}</small></div>
+      </div>
+      <div class="panel"><h3 style="margin-bottom:14px">重點觀察</h3><ul class="insights">${ins.map(x=>`<li>${x}</li>`).join("")}</ul></div>
+      <div class="ads-grid">
+        <div class="panel"><h3>依直播主</h3><p class="sub">色彩與月曆一致</p>${barRows(byHost,total,hostColor)}</div>
+        <div class="panel"><h3>依檔期</h3><p class="sub">本月 ${mc.length} 個檔期</p>${barRows(byCamp,total)}</div>
+      </div>
+      <div class="panel"><h3>各直播場次明細</h3><p class="sub">本月共 ${n} 場・點選場次可編輯</p>${detail}</div>
+    </div>`;
+  }
+
+  $("paneAds").addEventListener("click",e=>{
+    const tr=e.target.closest("tr[data-s]");if(!tr||readOnly)return;
+    openDrawer(tr.dataset.d);const ss=sessions.find(x=>x.id===tr.dataset.s);const c=ss&&campaigns.find(x=>x.id===ss.campaignId);if(c)goSess(c,ss);
+  });
+  $("paneAds").addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.matches("tr[data-s]"))e.target.click()});
+
+  // 手機版：月曆下方依日期列出本月所有場次
+  function renderAgenda(y,m){
+    const prefix=y+"-"+pad(m+1),today=ymd(new Date());
+    const list=sessions.filter(s=>s.date&&s.date.startsWith(prefix)&&sessOK(s)).map(s=>({s,c:campaigns.find(c=>c.id===s.campaignId)})).filter(x=>x.c)
+      .sort((a,b)=>a.s.date.localeCompare(b.s.date)||(toMin(a.s.start)??0)-(toMin(b.s.start)??0));
+    if(!list.length){$("agenda").innerHTML=`<div class="ag-empty">本月尚無場次</div>`;return}
+    const by={};list.forEach(x=>(by[x.s.date]=by[x.s.date]||[]).push(x));
+    $("agenda").innerHTML=Object.keys(by).map(d=>{
+      const arr=by[d],bud=arr.reduce((a,x)=>a+x.s.budget,0);
+      return `<div class="ag-day"><div class="ag-head${d===today?" today":""}"><b>${md(d)}</b><span>週${dowOf(d)}・${arr.length} 場</span>${bud?`<span class="amt">${money(bud)}</span>`:""}</div>`+
+        arr.map(({s,c})=>{const col=hostColor(s.hostA);return `<button class="ag-item${col==="#000000"?" k-black":""}" style="--c:${col}" data-s="${s.id}" data-d="${d}">
+          <div class="ag-top"><b>${esc(s.title||"未命名場次")}</b>${s.budget?`<span class="amt">${money(s.budget)}</span>`:""}</div>
+          <div class="ag-meta"><span class="tag">${SLOTS[s.slot].l}</span><span>${timeLabel(s)}</span><span>${esc(s.location||"")}</span><span class="camp-n">${esc(c.name)}</span></div>
+          ${showCrew?`<dl class="ag-crew">${CREW.map(r=>{const a=r.get(s)||[];return a.length?`<dt>${r.l}</dt><dd>${esc(a.join("、"))}</dd>`:""}).join("")}</dl>`:""}
+        </button>`}).join("")+`</div>`;
+    }).join("");
+  }
+  $("agenda").addEventListener("click",e=>{
+    const b=e.target.closest(".ag-item");if(!b)return;
+    openDrawer(b.dataset.d);
+    if(!readOnly){const ss=sessions.find(x=>x.id===b.dataset.s);const c=ss&&campaigns.find(x=>x.id===ss.campaignId);if(c)goSess(c,ss)}
+  });
+  $("cal").addEventListener("click",e=>{
+    const b=e.target.closest(".day");if(!b)return;
+    openDrawer(b.dataset.d);
+    const ch=e.target.closest(".chip[data-s]");
+    if(ch&&!readOnly){const ss=sessions.find(x=>x.id===ch.dataset.s);const c=ss&&campaigns.find(x=>x.id===ss.campaignId);if(c)goSess(c,ss)}
+  });
+  $("prev").onclick=()=>{view.setMonth(view.getMonth()-1);render()};
+  $("next").onclick=()=>{view.setMonth(view.getMonth()+1);render()};
+  $("todayBtn").onclick=()=>{view=new Date();view.setDate(1);render()};
+  $("hostChips").addEventListener("click",e=>{const b=e.target.closest(".hchip");if(!b)return;hostSel=b.dataset.h;render()});
+  $("addCamp").onclick=()=>{openDrawer(ymd(new Date()));goCamp(null)};
+  $("crewToggle").checked=showCrew;
+  $("crewToggle").onchange=e=>{showCrew=e.target.checked;try{localStorage.setItem("lc-crew",showCrew?"1":"0")}catch(err){}render()};
+  $("connBtn").onclick=()=>{openDrawer(ymd(new Date()));renderConn()};
+  $("manageBtn").onclick=()=>{openDrawer(ymd(new Date()));renderManage()};
+
+  /* ================= 側欄 ================= */
+  function openDrawer(date){
+    selDate=date;renderDay();
+    $("drawer").classList.add("on");$("scrim").classList.add("on");$("drawer").setAttribute("aria-hidden","false");
+  }
+  function closeDrawer(){$("drawer").classList.remove("on");$("scrim").classList.remove("on");$("drawer").setAttribute("aria-hidden","true");selDate=null;mode="day"}
+  $("closeDr").onclick=closeDrawer;$("scrim").onclick=closeDrawer;
+  document.addEventListener("keydown",e=>{if(e.key==="Escape"&&selDate&&!$("dlg").classList.contains("on"))closeDrawer()});
+
+  function setHead(t,sub,back){
+    $("drTitle").textContent=t;$("drSub").textContent=sub||"";
+    $("backSlot").innerHTML=back?`<button class="btn icon quiet" data-act="back" aria-label="返回">‹</button>`:"";
+  }
+  function setFoot(html){$("footRow").innerHTML=html||"";$("drFoot").classList.toggle("on",!!html);showErr("")}
+  function showErr(t){$("err").textContent=t;$("err").classList.toggle("on",!!t)}
+  $("backSlot").addEventListener("click",e=>{const b=e.target.closest("[data-act=back]");if(b)handleAct(b)});
+  $("footRow").addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(b)handleAct(b)});
+
+  const sessCard=(s,c)=>`<div class="sess${hostColor(s.hostA)==="#000000"?" k-black":""}" style="--c:${hostColor(s.hostA)}"${readOnly?"":` data-act="editSess" data-s="${s.id}" tabindex="0" role="button" aria-label="編輯場次 ${esc(sessTitle(s,c))}"`}>
+          <div class="sess-top"><span class="sess-name">${esc(sessTitle(s,c))}</span><span class="amt">${money(s.budget)}</span></div>
+          <div class="meta"><span class="tag">${SLOTS[s.slot].l}</span><span>${timeLabel(s)}</span><span>${esc(s.location||"直播地點未設定")}</span></div>
+          <dl><dt>直播主</dt><dd>${esc(s.hostA||"—")}</dd>${ROLES.map(r=>`<dt>${r.l}</dt><dd>${esc(join(s[r.k]))}</dd>`).join("")}</dl>
+          ${readOnly?"":`<div class="acts"><button class="btn quiet sm" data-act="editSess" data-s="${s.id}">編輯</button><button class="btn danger sm" data-act="delSess" data-s="${s.id}">刪除</button></div>`}
+        </div>`;
+
+  /* ---- 返回目標：表單儲存或取消後回到原本的畫面 ---- */
+  let home={t:"day"};
+  function goHome(){
+    if(home.t==="manage")return renderManage();
+    if(home.t==="camp"&&campaigns.some(c=>c.id===home.id))return renderCampView(home.id,home.prev);
+    if(home.t==="camp")home=home.prev||{t:"day"};
+    return home.t==="manage"?renderManage():renderDay();
+  }
+
+  function renderCampView(id,prev){
+    const c=campaigns.find(x=>x.id===id);if(!c)return renderDay();
+    mode="campView";home={t:"camp",id,prev:prev||{t:"day"}};
+    const all=sessOf(c.id);
+    const total=all.reduce((a,s)=>a+s.budget,0);
+    setHead(c.name,`${rangeLabel(c)}・共 ${all.length} 場・廣告預算 ${money(total)}`,true);
+    setFoot(readOnly?"":`<button class="btn quiet" data-act="editCamp" data-c="${c.id}">編輯檔期</button><span class="spacer"></span><button class="btn primary" data-act="addSessOn" data-c="${c.id}" data-d="${selDate>=c.start&&selDate<=c.end?selDate:c.start}">＋ 新增場次</button>`);
+    const days=datesBetween(c.start,c.end);
+    $("drBody").innerHTML=`<section class="camp">`+days.map(d=>{
+      const list=sessOf(c.id,d);
+      return `<div class="day-row"><span class="dr-date">${md(d)}<small>週${dowOf(d)}</small></span><span class="dr-cnt">${list.length?`${list.length} 場・${money(list.reduce((a,s)=>a+s.budget,0))}`:"未排場次"}</span>${readOnly?"":`<button class="btn quiet sm" data-act="addSessOn" data-c="${c.id}" data-d="${d}">＋ 場次</button>`}</div>`+list.map(s=>sessCard(s,c)).join("");
+    }).join("")+`</section>`;
+    $("drBody").scrollTop=0;
+  }
+
+  function renderDay(){
+    home={t:"day"};
+    mode="day";
+    const d=parse(selDate);
+    const cs=campOn(selDate);
+    const ss=cs.flatMap(c=>sessOf(c.id,selDate));
+    setHead(`${d.getMonth()+1}月${d.getDate()}日　週${DOW[d.getDay()]}`,
+      cs.length?`${cs.length} 個檔期・${ss.length} 場・廣告預算 ${money(ss.reduce((a,s)=>a+s.budget,0))}`:"這天還沒有檔期");
+    setFoot(readOnly?"":`<button class="btn primary" data-act="newCamp" style="flex:1">＋ 新增檔期（從這天開始）</button>`);
+    let html=cs.map(c=>{
+      const list=sessOf(c.id,selDate);
+      return `<section class="camp">
+        <div class="camp-head">
+          <div><h3><button class="link" data-act="campView" data-c="${c.id}">${esc(c.name)} ›</button></h3><p>${rangeLabel(c)}・共 ${sessOf(c.id).length} 場</p></div>
+          ${readOnly?`<div class="camp-acts"><button class="btn quiet sm" data-act="campView" data-c="${c.id}">全部場次</button></div>`:`<div class="camp-acts"><button class="btn outline sm" data-act="addSess" data-c="${c.id}">＋ 新增場次</button><button class="btn quiet sm" data-act="campView" data-c="${c.id}">全部場次</button><button class="btn quiet sm" data-act="editCamp" data-c="${c.id}">編輯</button></div>`}
+        </div>
+        ${list.length?list.map(s=>sessCard(s,c)).join(""):`<div class="no-sess">這天還沒有場次，按「新增場次」開始排班。</div>`}
+      </section>`;
+    }).join("");
+    if(!cs.length)html=`<div class="empty-day">從這天開始建立一個檔期，再逐日新增場次。</div>`;
+    $("drBody").innerHTML=html;$("drBody").scrollTop=0;
+  }
+
+  function renderConn(){
+    mode="conn";
+    setHead("資料連線","串接 Google 試算表，多人共用同一份資料");
+    setFoot(`${api?`<button class="btn danger" data-act="disconnect">中斷連線</button>`:""}<span class="spacer"></span><button class="btn primary" type="submit" form="connForm">測試並儲存</button>`);
+    $("drBody").innerHTML=`<form id="connForm" novalidate>
+      <div class="section"><h4>連線設定<small>${api?"目前：已設定":"目前：未設定"}</small></h4>
+        <div class="grid2">
+          <label class="field full"><span>Apps Script 網頁應用程式網址<em>*</em></span><input class="input" name="url" placeholder="https://script.google.com/macros/s/…/exec" value="${esc(api)}"></label>
+          <label class="field full"><span>密碼（TOKEN）<em>*</em></span><input class="input" name="tk" placeholder="與 Apps Script 中 TOKEN 相同" value="${esc(token)}"></label>
+        </div>
+      </div>
+      <div class="section"><h4>資料搬移<small>把既有資料寫入試算表</small></h4>
+        <p class="hint" style="margin-bottom:12px">選擇從線上版「備份資料」下載的 JSON 檔，會<b>覆蓋</b>試算表中的全部檔期與場次。</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <label class="btn outline"><input type="file" id="importFile" accept=".json,application/json" hidden>選擇 JSON 匯入</label>
+          <button type="button" class="btn quiet" data-act="pushLocal">把本機資料上傳到試算表</button>
+        </div>
+      </div>
+      <div class="section"><h4>設定步驟</h4>
+        <ol class="hint" style="padding-left:18px;line-height:1.9;margin:0">
+          <li>開新的 Google 試算表 →「擴充功能」→「Apps Script」</li>
+          <li>貼上 google-apps-script.gs 全部內容，修改 TOKEN 後儲存</li>
+          <li>執行一次 setup() 並完成授權</li>
+          <li>「部署」→「新增部署作業」→ 網頁應用程式；執行身分「我」、存取權「所有人」</li>
+          <li>複製網址貼到上方，按「測試並儲存」</li>
+        </ol>
+      </div>
+    </form>`;
+    const f=$("connForm");
+    f.addEventListener("submit",async ev=>{
+      ev.preventDefault();
+      const url=f.elements.url.value.trim(),tk=f.elements.tk.value.trim();
+      if(!/^https:\/\/script\.google(usercontent)?\.com\//.test(url)){showErr("網址格式不正確，應為 https://script.google.com/macros/s/…/exec");return}
+      if(!tk){showErr("請輸入密碼（TOKEN）");return}
+      const btn=$("drFoot").querySelector('[form="connForm"]');btn.disabled=true;btn.textContent="連線中…";
+      try{
+        const j=await apiGet(url,tk);
+        api=url;token=tk;try{localStorage.setItem(API_KEY,api);localStorage.setItem(TOKEN_KEY,token)}catch(e){}
+        const n=(j.campaigns||[]).length,m=(j.sessions||[]).length;
+        if(!n&&!m&&(campaigns.length||sessions.length)&&await ask("試算表目前是空的",`要把本機的 ${campaigns.length} 個檔期、${sessions.length} 個場次上傳到試算表嗎？`,"上傳")){await apiPost({action:"import",data:backupData()})}
+        await pull();toast("已連線 Google 試算表");renderConn();
+      }catch(e){showErr(e.code==="token"?"密碼與 Apps Script 中的 TOKEN 不一致。":"無法連線，請確認網址、部署權限為「所有人」。");btn.disabled=false;btn.textContent="測試並儲存"}
+    });
+    $("importFile").addEventListener("change",async e=>{
+      const file=e.target.files[0];if(!file)return;
+      try{
+        const d=JSON.parse(await file.text());
+        if(!Array.isArray(d.campaigns)||!Array.isArray(d.sessions))throw new Error("format");
+        if(!await ask("匯入資料",`將匯入 ${d.campaigns.length} 個檔期、${d.sessions.length} 個場次，${api?"並覆蓋試算表中的全部資料":"存在此瀏覽器"}。確定嗎？`,"匯入",true))return;
+        if(api)await apiPost({action:"import",data:d});
+        campaigns=d.campaigns;sessions=d.sessions.map(normSess);saveLocal();render();
+        toast("匯入完成");if(api)pull(true);
+      }catch(err){toast(err.message==="format"?"檔案格式不符，請使用「備份資料」匯出的 JSON":"匯入失敗："+(err.code||err.message))}
+      e.target.value="";
+    });
+  }
+  function renderManage(){
+    mode="manage";home={t:"manage"};
+    const list=campaigns.slice().sort((a,b)=>a.start.localeCompare(b.start));
+    const empty=list.filter(c=>!sessOf(c.id).length).length;
+    const orphans=sessions.filter(s=>!campaigns.some(c=>c.id===s.campaignId));
+    setHead("檔期管理",`共 ${list.length} 個檔期${empty?`・其中 ${empty} 個尚未排場次`:""}`);
+    setFoot(orphans.length&&!readOnly?`<span class="hint" style="flex:1">有 ${orphans.length} 筆場次的檔期已不存在</span><button class="btn danger" data-act="cleanOrphans">清除</button>`:"");
+    $("drBody").innerHTML=list.length?list.map(c=>{
+      const n=sessOf(c.id).length;
+      return `<section class="camp"><div class="camp-head">
+        <div><h3>${esc(c.name)}</h3><p>${rangeLabel(c)}・${n?`共 ${n} 場`:`<span style="color:var(--danger)">尚未排場次</span>`}</p></div>
+        <div class="camp-acts"><button class="btn outline sm" data-act="campView" data-c="${c.id}">查看場次</button>${readOnly?"":`<button class="btn quiet sm" data-act="editCamp" data-c="${c.id}">編輯</button><button class="btn danger sm" data-act="delCamp" data-c="${c.id}">刪除</button>`}</div>
+      </div></section>`;
+    }).join(""):`<div class="empty-day">目前沒有任何檔期。</div>`;
+  }
+  $("drBody").addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.matches(".sess[data-act]")){e.preventDefault();e.target.click()}});
+  $("drBody").addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(b)handleAct(b)});
+
+  async function handleAct(b){
+    const a=b.dataset.act;
+    if(a==="disconnect"){
+      if(!await ask("中斷連線","中斷後改為只存在此瀏覽器，試算表資料不受影響。","中斷"))return;
+      api="";token="";try{localStorage.removeItem(API_KEY);localStorage.removeItem(TOKEN_KEY)}catch(e){}
+      setStatus("僅存於此瀏覽器（未連線試算表）");toast("已中斷連線");return renderConn();
+    }
+    if(a==="pushLocal"){
+      if(!api){toast("請先完成連線設定");return}
+      if(!await ask("上傳本機資料",`以本機的 ${campaigns.length} 個檔期、${sessions.length} 個場次覆蓋試算表全部資料？`,"上傳",true))return;
+      try{await apiPost({action:"import",data:backupData()});toast("已上傳");pull(true)}catch(err){toast(errText(err))}
+      return;
+    }
+    if(a==="back"){
+      if(mode==="campView"){const p=home.prev||{t:"day"};home=p;return p.t==="manage"?renderManage():renderDay()}
+      return goHome();
+    }
+    if(a==="campView"){const prev=mode==="manage"?{t:"manage"}:{t:"day"};return renderCampView(b.dataset.c,prev)}
+    if(a==="addSessOn"){const c=campaigns.find(x=>x.id===b.dataset.c);if(!c)return;selDate=b.dataset.d;return goSess(c,null)}
+    if(a==="goDay"){selDate=b.dataset.d;const d=parse(selDate);view=new Date(d.getFullYear(),d.getMonth(),1);render();return renderDay()}
+    if(a==="cleanOrphans"){
+      const os=sessions.filter(s=>!campaigns.some(c=>c.id===s.campaignId));
+      if(!await ask("清除無效場次",`刪除 ${os.length} 筆所屬檔期已不存在的場次？`,"清除",true))return;
+      try{for(const s of os)await del("s",s.id);toast("已清除");renderManage()}catch(err){toast(errText(err))}
+      return;
+    }
+    if(a==="newCamp")return goCamp(null);
+    if(a==="editCamp"){const c=campaigns.find(x=>x.id===b.dataset.c);if(c&&(selDate<c.start||selDate>c.end))selDate=c.start;return goCamp(c)}
+    if(a==="addSess")return goSess(campaigns.find(c=>c.id===b.dataset.c),null);
+    if(a==="editSess"){const s=sessions.find(x=>x.id===b.dataset.s);const c=s&&campaigns.find(x=>x.id===s.campaignId);if(c)goSess(c,s);return}
+    if(a==="delSess"){
+      const s=sessions.find(x=>x.id===b.dataset.s);if(!s)return;
+      if(!await ask("刪除場次",`確定刪除「${sessTitle(s,campaigns.find(c=>c.id===s.campaignId))}」？\n${md(s.date)} ${SLOTS[s.slot].l} ${timeLabel(s)}`,"刪除",true))return;
+      try{await del("s",s.id);toast("已刪除場次");goHome()}catch(err){toast(errText(err))}
+    }
+    if(a==="delCamp"){
+      const c=campaigns.find(x=>x.id===b.dataset.c);if(!c)return;const n=sessOf(c.id).length;
+      if(!await ask("刪除檔期",`確定刪除檔期「${c.name}」${n?`及其底下 ${n} 個場次`:""}？此動作無法復原。`,"刪除",true))return;
+      try{deletingCamp=true;try{for(const s of sessOf(c.id))await del("s",s.id)}finally{deletingCamp=false}await del("c",c.id);toast("已刪除檔期");if(home.t==="camp"&&home.id===c.id)home=home.prev||{t:"day"};goHome()}catch(err){toast(errText(err))}
+    }
+  }
+
+  /* ---------- 檔期表單 ---------- */
+  function goCamp(c){
+    mode="camp";
+    setHead(c?"編輯檔期":"新增檔期",c?c.name:"設定名稱與日期區間，建立後接著新增場次",true);
+    setFoot(`${c?`<button class="btn danger" data-act="delCamp" data-c="${c.id}">刪除檔期</button>`:""}<span class="spacer"></span><button class="btn quiet" data-act="back">取消</button><button class="btn primary" type="submit" form="campForm">${c?"儲存變更":"建立檔期"}</button>`);
+    $("drBody").innerHTML=`
+      <form id="campForm" novalidate>
+        <div class="section"><h4>檔期資訊</h4>
+          <div class="grid2">
+            <label class="field full"><span>檔期名稱<em>*</em></span><input class="input" name="title" maxlength="80" value="${esc(c?c.name:"")}" placeholder="例：雙11保養品檔期"></label>
+            <label class="field"><span>開始日期<em>*</em></span><input class="input" name="start" type="date" value="${c?c.start:selDate}"></label>
+            <label class="field"><span>結束日期<em>*</em></span><input class="input" name="end" type="date" value="${c?c.end:selDate}"></label>
+            <p class="hint" id="span" style="grid-column:1/-1"></p>
+          </div>
+        </div>
+              </form>`;
+    const f=$("campForm"),E=f.elements;
+    const upd=()=>{const a=E.start.value,b=E.end.value;$("span").textContent=isDate(a)&&isDate(b)&&b>=a?`共 ${dayDiff(a,b)+1} 天（${md(a)} 週${dowOf(a)} – ${md(b)} 週${dowOf(b)}）`:""};
+    E.start.addEventListener("change",()=>{if(isDate(E.start.value)&&(!isDate(E.end.value)||E.end.value<E.start.value))E.end.value=E.start.value;upd()});
+    E.end.addEventListener("change",upd);upd();
+    setTimeout(()=>E.title.focus(),50);
+    f.addEventListener("submit",async ev=>{
+      ev.preventDefault();
+      const btn=$("drFoot").querySelector('[form="campForm"]');
+      try{
+        const data={name:E.title.value.trim(),start:E.start.value,end:E.end.value};
+        const errs=[];
+        if(!data.name)errs.push("請填寫檔期名稱");
+        if(!isDate(data.start)||!isDate(data.end))errs.push("請選擇開始與結束日期");
+        else if(data.end<data.start)errs.push("結束日期不可早於開始日期");
+        else if(dayDiff(data.start,data.end)+1>MAX_DAYS)errs.push(`檔期最長 ${MAX_DAYS} 天`);
+        if(c&&!errs.length){
+          const out=sessOf(c.id).filter(s=>s.date<data.start||s.date>data.end);
+          if(out.length)errs.push(`有 ${out.length} 個場次落在新區間外（${[...new Set(out.map(s=>md(s.date)))].join("、")}），請先刪除或移動這些場次`);
+        }
+        if(errs.length){showErr(errs.join("；")+"。");return}
+        btn.disabled=true;
+        const obj=Object.assign({id:c?c.id:newId("c"),createdAt:c&&c.createdAt||Date.now()},data);
+        await put("c",obj);
+        toast(c?"已儲存檔期":"已建立檔期");
+        if(selDate<data.start||selDate>data.end)selDate=data.start;
+        const d=parse(selDate);view=new Date(d.getFullYear(),d.getMonth(),1);render();
+        if(c)goHome();else{home={t:"camp",id:obj.id,prev:home.t==="camp"?home.prev:home};goSess(obj,null)}
+      }catch(err){showErr(errText(err));if(btn)btn.disabled=false}
+    });
+  }
+
+  /* ---------- 場次表單 ---------- */
+  function slotTimes(slot){const a=toMin(SLOTS[slot].from),b=toMin(SLOTS[slot].to);const o=[];for(let t=a;t<=b;t+=STEP)o.push(t);return o}
+  const dateOpts=(dates,sel)=>dates.map(d=>`<option value="${d}"${d===sel?" selected":""}>${md(d)}　週${dowOf(d)}</option>`).join("");
+  function locOptions(cur){
+    const learned=sessions.map(s=>s.location).filter(Boolean);
+    const all=[...new Set([...LOCATIONS,...learned])];
+    return `<option value="" disabled${cur?"":" selected"}>請選擇直播地點</option>`+all.map(l=>`<option value="${esc(l)}"${l===cur?" selected":""}>${esc(l)}</option>`).join("")+`<option value="${OTHER}">其他（自行輸入）</option>`;
+  }
+  function goSess(c,s){
+    mode="sess";
+    const dates=datesBetween(c.start,c.end);
+    const date=s&&dates.includes(s.date)?s.date:(dates.includes(selDate)?selDate:dates[0]);
+    const slot=s?s.slot:"noon";
+    setHead(s?"編輯場次":"新增場次",c.name,true);
+    setFoot(`${s?`<button class="btn danger" data-act="delSess" data-s="${s.id}">刪除</button>`:""}<span class="spacer"></span><button class="btn quiet" data-act="back">取消</button><button class="btn primary" type="submit" form="sessForm">${s?"儲存變更":"新增場次"}</button>`);
+    $("drBody").innerHTML=`
+      <form id="sessForm" novalidate>
+        <div class="section"><h4>基本資訊</h4>
+          <div class="grid2">
+            <label class="field full"><span>所屬檔期<em>*</em></span><select class="select" name="camp">${campaigns.slice().sort((a,b)=>a.start.localeCompare(b.start)).map(x=>`<option value="${x.id}"${x.id===c.id?" selected":""}>${esc(x.name)}（${rangeLabel(x)}）</option>`).join("")}</select></label>
+            <label class="field full" id="fTitle"><span>場次名稱<em>*</em></span><input class="input" name="title" maxlength="60" value="${esc(s&&s.title||"")}" placeholder="例：開箱首播、限時快閃"></label>
+            <div class="field full" id="fLoc"><span>直播地點<em>*</em></span>
+              <select class="select" name="location">${locOptions(s&&s.location)}</select>
+              <input class="input other-loc" name="locOther" maxlength="30" placeholder="輸入直播地點名稱" hidden>
+            </div>
+            <label class="field full"><span>直播日期<em>*</em></span><select class="select" name="date">${dateOpts(dates,date)}</select></label>
+          </div>
+        </div>
+        <div class="section"><h4>直播時段<small>每 30 分鐘一格</small></h4>
+          <div class="grid2">
+            <div class="field full"><div class="seg" role="radiogroup" aria-label="場別">${Object.entries(SLOTS).map(([k,v])=>`<label><input type="radio" name="slot" value="${k}"${k===slot?" checked":""}><span>${v.l}<small>${disp(v.defFrom)}–${disp(v.defTo)}</small></span></label>`).join("")}</div></div>
+            <label class="field" id="fTime"><span>開始時間<em>*</em></span><select class="select" name="start"></select></label>
+            <label class="field"><span>結束時間<em>*</em></span><select class="select" name="end"></select></label>
+            <p class="hint" id="dur" style="grid-column:1/-1"></p>
+          </div>
+        </div>
+        <div class="section"><h4>人員配置<small>直播主單選，其餘可複選並輸入其他人名</small></h4>
+          <fieldset class="role" id="fHostA"><legend>直播主<em>*</em><small>單選</small></legend>
+            <div class="chips">${HOSTS_A.map(h=>`<label class="pick host"><input type="radio" name="hostA" value="${esc(h.n)}"${s&&s.hostA===h.n?" checked":""}><span><i class="sw${h.c==="#000000"?" k-black":""}" style="--c:${h.c}"></i>${esc(h.n)}</span></label>`).join("")}</div>
+          </fieldset>
+          <div id="roles"></div></div>
+        <div class="section"><h4>預算</h4>
+          <label class="field"><span>本場廣告預算（NT$）</span><input class="input" name="budget" type="number" min="0" step="100" inputmode="numeric" placeholder="0" value="${s&&s.budget?s.budget:""}"></label>
+        </div>
+      </form>`;
+    const f=$("sessForm"),E=f.elements;
+    // 地點：其他自行輸入
+    const locSel=E.location,locOther=E.locOther;
+    if(s&&s.location&&![...locSel.options].some(o=>o.value===s.location)){locSel.value=OTHER;locOther.hidden=false;locOther.value=s.location}
+    locSel.addEventListener("change",()=>{const o=locSel.value===OTHER;locOther.hidden=!o;if(o)locOther.focus();$("fLoc").classList.remove("bad")});
+    // 時段
+    const slotVal=()=>(f.querySelector('input[name="slot"]:checked')||{}).value||"noon";
+    function fillTimes(keepStart,keepEnd){
+      const starts=slotTimes(slotVal()).slice(0,-1);
+      E.start.innerHTML=starts.map(t=>`<option value="${fmt(t)}">${disp(fmt(t))}</option>`).join("");
+      E.start.value=keepStart&&starts.map(fmt).includes(keepStart)?keepStart:SLOTS[slotVal()].defFrom;
+      fillEnd(keepEnd);
+    }
+    function fillEnd(keepEnd){
+      const st=toMin(E.start.value),ends=slotTimes(slotVal()).filter(t=>t>st);
+      E.end.innerHTML=ends.map(t=>`<option value="${fmt(t)}">${disp(fmt(t))}</option>`).join("");
+      const dEnd=toMin(SLOTS[slotVal()].defTo),def=ends.includes(dEnd)?dEnd:ends[ends.length-1];   // 預設帶入場別標準結束時間
+      E.end.value=keepEnd&&ends.map(fmt).includes(keepEnd)?keepEnd:fmt(def);
+      showDur();
+    }
+    function showDur(){const m=toMin(E.end.value)-toMin(E.start.value);const h=Math.floor(m/60),mm=m%60;$("dur").textContent=m>0?"時長 "+[h?h+" 小時":"",mm?mm+" 分鐘":""].filter(Boolean).join(" "):""}
+    f.querySelectorAll('input[name="slot"]').forEach(r=>r.addEventListener("change",()=>fillTimes()));
+    E.start.addEventListener("change",()=>fillEnd(E.end.value));
+    E.end.addEventListener("change",showDur);
+    fillTimes(s&&s.start,s&&s.end);
+    buildRoles(s);
+    if(E.camp)E.camp.addEventListener("change",()=>{
+      const nc=campaigns.find(x=>x.id===E.camp.value);if(!nc)return;
+      const ds=datesBetween(nc.start,nc.end),cur=E.date.value;
+      E.date.innerHTML=dateOpts(ds,ds.includes(cur)?cur:ds[0]);$("drSub").textContent=nc.name;
+    });
+    E.title.addEventListener("input",()=>$("fTitle").classList.remove("bad"));
+    if(!s)setTimeout(()=>E.title.focus(),50);
+
+    f.addEventListener("submit",async ev=>{
+      ev.preventDefault();
+      const btn=$("drFoot").querySelector('[form="sessForm"]');
+      try{
+        f.querySelectorAll(".role").forEach(fs=>{addOther(fs);fs.classList.remove("bad")});
+        f.querySelectorAll(".field.bad").forEach(x=>x.classList.remove("bad"));
+        const location=locSel.value===OTHER?locOther.value.trim():(locSel.value||"");
+        const data={
+          campaignId:E.camp?E.camp.value:c.id, location, title:E.title.value.trim(),
+          date:E.date.value, slot:slotVal(), start:E.start.value, end:E.end.value,
+          budget:Math.max(0,Number(E.budget.value)||0)
+        };
+        ROLES.forEach(r=>data[r.k]=[...f.querySelectorAll(`input[name="role-${r.k}"]:checked`)].map(x=>x.value));
+        data.hostA=(f.querySelector('input[name="hostA"]:checked')||{}).value||"";
+        const errs=[],bad=[];
+        if(!data.location){errs.push(locSel.value===OTHER?"請輸入直播地點名稱":"請選擇直播地點");bad.push($("fLoc"))}
+        if(!data.title){errs.push("請填寫場次名稱");bad.push($("fTitle"))}
+        if(!isDate(data.date))errs.push("請選擇直播日期");
+        if(!(toMin(data.end)>toMin(data.start))){errs.push("結束時間必須晚於開始時間");bad.push($("fTime"))}
+        if(!data.hostA){errs.push("請選擇直播主");bad.push($("fHostA"))}
+        RULES.forEach(rule=>{if(!rule.test(data)){errs.push(rule.msg);rule.roles.forEach(k=>bad.push(f.querySelector(`.role[data-role="${k}"]`)))}});
+        if(errs.length){
+          bad.forEach(x=>x&&x.classList.add("bad"));
+          showErr(errs.join("；")+"。");
+          try{bad[0]&&bad[0].scrollIntoView({behavior:"smooth",block:"center"})}catch(e){}
+          return;
+        }
+        showErr("");
+        // 人員撞期
+        const a1=toMin(data.start),a2=toMin(data.end),me=new Set([data.hostA,...ROLES.flatMap(r=>data[r.k])].filter(Boolean)),hits=[];
+        sessions.filter(o=>o.date===data.date&&(!s||o.id!==s.id)&&o.start&&o.end).forEach(o=>{
+          if(!(a1<toMin(o.end)&&toMin(o.start)<a2))return;
+          const who=[...new Set([o.hostA,...ROLES.flatMap(r=>o[r.k])])].filter(n=>n&&me.has(n));
+          const cn=(campaigns.find(x=>x.id===o.campaignId)||{}).name||"";
+          if(who.length)hits.push(`• ${who.join("、")}：${o.title||cn}（${timeLabel(o)}）`);
+        });
+        if(hits.length&&!await ask("人員時段重疊","以下人員在同一時段已有其他場次：\n\n"+hits.join("\n")+"\n\n仍要儲存嗎？","仍要儲存"))return;
+        btn.disabled=true;btn.textContent="儲存中…";
+        await put("s",Object.assign({id:s?s.id:newId("s"),createdAt:s&&s.createdAt||Date.now()},data));
+        toast((s?"已儲存變更":"已新增場次")+(data.date!==selDate?`・${md(data.date)}`:""));
+        selDate=data.date;const d=parse(selDate);view=new Date(d.getFullYear(),d.getMonth(),1);render();
+        goHome();
+      }catch(err){
+        showErr(errText(err));
+        if(btn){btn.disabled=false;btn.textContent=s?"儲存變更":"新增場次"}
+      }
+    });
+  }
+
+  /* ---------- 人員選擇器 ---------- */
+  const chip=(k,n,on)=>`<label class="pick"><input type="checkbox" name="role-${k}" value="${esc(n)}"${on?" checked":""}><span>${esc(n)}</span></label>`;
+  function buildRoles(cur){
+    $("roles").innerHTML=ROLES.map(r=>{
+      const sel=cur?cur[r.k]:[];
+      const names=[...new Set([...r.opts,...sessions.flatMap(x=>x[r.k]),...sel])];
+      return `<fieldset class="role" data-role="${r.k}">
+        <legend>${r.l}<em>*</em><small>${REQ[r.k]}</small></legend>
+        <div class="chips">${names.map(n=>chip(r.k,n,sel.includes(n))).join("")}</div>
+        <div class="other"><input class="input" type="text" maxlength="20" placeholder="其他${r.l}：輸入人名後按 Enter" aria-label="新增其他${r.l}"></div>
+      </fieldset>`;
+    }).join("");
+  }
+  function addOther(fs){
+    const inp=fs.querySelector(".other input");if(!inp)return;const name=inp.value.trim();if(!name)return;
+    const box=fs.querySelector(".chips");
+    const ex=[...box.querySelectorAll("input")].find(c=>c.value===name);
+    if(ex)ex.checked=true;else box.insertAdjacentHTML("beforeend",chip(fs.dataset.role,name,true));
+    inp.value="";fs.classList.remove("bad");
+  }
+  $("drBody").addEventListener("focusout",e=>{if(e.target.closest(".other"))addOther(e.target.closest(".role"))});
+  $("drBody").addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.closest(".other")){e.preventDefault();addOther(e.target.closest(".role"))}});
+  $("drBody").addEventListener("change",e=>{if(e.target.closest(".role"))$("drBody").querySelectorAll(".role.bad").forEach(x=>x.classList.remove("bad"))});
+
+  /* ================= 匯出 ================= */
+  /* ---- 匯出網頁：本月檔期與場次的獨立 HTML 報表 ---- */
+  $("htmlBtn").onclick=async()=>{
+    const y=view.getFullYear(),m=view.getMonth();
+    const {prefix,mc,ms}=monthData(y,m);
+    const total=sum(ms,s=>s.budget);
+    const rows=ms.slice().sort((a,b)=>a.date.localeCompare(b.date)||(toMin(a.start)??0)-(toMin(b.start)??0));
+    const cn=s=>(campaigns.find(c=>c.id===s.campaignId)||{}).name||"";
+    const byHost=groupBy(ms,s=>s.hostA),byCamp=groupBy(ms,cn);
+    const by={};rows.forEach(s=>(by[s.date]=by[s.date]||[]).push(s));
+    const crew=s=>[["主",[s.hostA].filter(Boolean)],["副",s.coHost],["助",s.assistant],["收",s.orders],["水",s.shills]].filter(x=>x[1].length).map(([l,a])=>`<span><b>${l}</b>${esc(a.join("、"))}</span>`).join("");
+    const bars=(gs,colorFn)=>{const mx=Math.max(1,...gs.map(g=>g.b));return gs.map(g=>{const c=colorFn?colorFn(g.k):"#cdb07a";return `<div class="br"><div class="bt"><span><i style="background:${c}${c==="#000000"?";box-shadow:0 0 0 1px #888":""}"></i>${esc(g.k)}</span><b>${money(g.b)}</b></div><div class="tr"><div style="width:${g.b/mx*100}%;background:${c}${c==="#000000"?";box-shadow:inset 0 0 0 1px #888":""}"></div></div><small>占 ${pct(g.b,total)}%・${g.n} 場・每場 ${money(g.n?g.b/g.n:0)}</small></div>`}).join("")};
+    const html=`<!DOCTYPE html><html lang="zh-Hant-TW"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>直播檔期報表 ${y}年${m+1}月</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#000;color:#efebe3;font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;font-size:14px;line-height:1.55}
+.w{max-width:1000px;margin:0 auto;padding:36px 20px 60px}h1,h2{font-family:"Noto Serif TC",serif;margin:0}
+.brand{color:#cdb07a;letter-spacing:.12em;font-size:13px;margin:0 0 8px}h1{font-size:44px}h1 small{font-size:16px;color:#7d776d;margin-left:10px;font-weight:400}
+.meta{color:#7d776d;font-size:12.5px;margin:8px 0 24px}
+.k{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid #262626;border-bottom:1px solid #262626;margin-bottom:28px}
+.k div{padding:16px 0 16px 18px;border-left:1px solid #262626}.k div:first-child{border-left:0;padding-left:0}
+.k b{display:block;font-family:"Noto Serif TC",serif;font-size:26px}.k .g b{color:#cdb07a}.k span{font-size:12px;color:#7d776d}
+h2{font-size:19px;margin:30px 0 14px;padding-bottom:10px;border-bottom:1px solid #262626}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.br{margin-bottom:14px}.bt{display:flex;justify-content:space-between}.bt span{display:flex;align-items:center;gap:8px}.bt i{width:10px;height:10px;border-radius:50%;display:inline-block}.bt b{color:#cdb07a}
+.tr{height:7px;background:#1c1c1c;border-radius:9px;margin:6px 0 4px;overflow:hidden}.tr div{height:100%;border-radius:9px;min-width:2px}.br small{color:#7d776d;font-size:12px}
+.day{margin-bottom:18px}.dh{display:flex;gap:10px;align-items:baseline;margin-bottom:8px}.dh b{font-family:"Noto Serif TC",serif;font-size:17px}.dh span{color:#7d776d;font-size:12.5px}.dh em{margin-left:auto;font-style:normal;color:#cdb07a}
+.s{background:#121212;border:1px solid #262626;border-left:4px solid var(--c);border-radius:4px 10px 10px 4px;padding:12px 14px;margin-bottom:8px}
+.s.kb{border-left-color:#000;box-shadow:inset 1px 0 0 #777}
+.st{display:flex;justify-content:space-between;gap:10px}.st b{font-size:15px}.st em{font-style:normal;color:#cdb07a;font-weight:700}
+.sm{color:#b8b2a7;font-size:12.5px;margin:3px 0 8px}.sm .t{border:1px solid rgba(205,176,122,.4);color:#cdb07a;border-radius:9px;padding:0 8px;font-size:11px;margin-right:6px}
+.cr{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12.5px;color:#b8b2a7}.cr b{color:#7d776d;font-weight:500;margin-right:5px}
+table{width:100%;border-collapse:collapse;font-size:13px}th{color:#7d776d;font-weight:500;text-align:left;padding:8px;border-bottom:1px solid #333;font-size:12px}td{padding:9px 8px;border-bottom:1px solid #222;color:#b8b2a7}td.r,th.r{text-align:right}td.a{color:#cdb07a;font-weight:700}tfoot td{color:#efebe3;font-weight:700;border-bottom:0}
+.foot{margin-top:36px;color:#5d584f;font-size:11.5px}
+@media(max-width:640px){h1{font-size:34px}.k{grid-template-columns:1fr 1fr}.k div:nth-child(3){border-left:0;padding-left:0}.k div:nth-child(n+3){border-top:1px solid #262626}.grid{grid-template-columns:1fr}table{font-size:12px}th:nth-child(3),td:nth-child(3){display:none}}
+@media print{body{background:#fff;color:#111}.s{background:#fff}.k b,.bt b,.st em,td.a{color:#7a5a20}.tr{background:#eee}.s,.k,.k div,h2,th,td{border-color:#ddd}}
+</style></head><body><div class="w">
+<p class="brand">直播檔期報表</p><h1>${y} 年 ${m+1} 月<small>匯出時間 ${new Date().toLocaleString("zh-TW",{hour12:false})}</small></h1>
+<p class="meta">統計範圍：開始日期在本月的 ${mc.length} 個檔期（跨月檔期的後續場次一併計入）</p>
+<div class="k"><div><b>${mc.length}</b><span>本月開播檔期</span></div><div><b>${ms.length}</b><span>本月開播場次</span></div><div class="g"><b>${money(total)}</b><span>本月廣告預算</span></div><div class="g"><b>${money(ms.length?total/ms.length:0)}</b><span>每場平均預算</span></div></div>
+${ms.length?`<div class="grid"><div><h2>依直播主</h2>${bars(byHost,hostColor)}</div><div><h2>依檔期</h2>${bars(byCamp)}</div></div>
+<h2>場次排程</h2>${Object.keys(by).map(d=>`<div class="day"><div class="dh"><b>${md(d)}</b><span>週${dowOf(d)}・${by[d].length} 場</span><em>${money(sum(by[d],s=>s.budget))}</em></div>${by[d].map(s=>{const c=hostColor(s.hostA);return `<div class="s${c==="#000000"?" kb":""}" style="--c:${c}"><div class="st"><b>${esc(s.title||"未命名場次")}</b><em>${s.budget?money(s.budget):"未填"}</em></div><div class="sm"><span class="t">${SLOTS[s.slot].l}</span>${timeLabel(s)}・${esc(s.location||"")}・${esc(cn(s))}</div><div class="cr">${crew(s)}</div></div>`}).join("")}</div>`).join("")}
+<h2>各直播場次明細</h2><table><thead><tr><th>直播日期</th><th>場次名稱</th><th>檔期</th><th>直播主</th><th>時段</th><th class="r">廣告預算</th></tr></thead><tbody>${rows.map(s=>`<tr><td>${md(s.date)} 週${dowOf(s.date)}</td><td>${esc(s.title||"未命名場次")}</td><td>${esc(cn(s))}</td><td>${esc(s.hostA||"—")}</td><td>${SLOTS[s.slot].l} ${timeLabel(s)}</td><td class="r a">${s.budget?money(s.budget):"未填"}</td></tr>`).join("")}</tbody><tfoot><tr><td colspan="5">合計 ${ms.length} 場</td><td class="r a">${money(total)}</td></tr></tfoot></table>`:`<p class="meta">本月尚無場次資料。</p>`}
+<p class="foot">本報表由直播檔期行事曆匯出，為匯出當下的資料快照。</p>
+</div></body></html>`;
+    try{await downloads.save({filename:`直播檔期報表_${prefix}.html`,data:new Blob([html],{type:"text/html"})});toast("已匯出網頁報表")}catch(err){toast("匯出失敗，請稍後再試")}
+  };
+  /* ---- 備份資料：完整 JSON，可匯入獨立版或 Google 試算表 ---- */
+  function backupData(){
+    const strip=s=>{const o=Object.assign({},s);delete o.host;delete o.hostB;return o};
+    return {app:"live-calendar",version:1,exportedAt:new Date().toISOString(),campaigns:campaigns.map(c=>Object.assign({},c)),sessions:sessions.map(strip)};
+  }
+  $("jsonBtn").onclick=async()=>{
+    const d=new Date(),stamp=d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate());
+    try{await downloads.save({filename:`直播檔期備份_${stamp}.json`,data:new Blob([JSON.stringify(backupData(),null,2)],{type:"application/json"})});toast(`已備份 ${campaigns.length} 檔期、${sessions.length} 場次`)}catch(err){toast("備份失敗，請稍後再試")}
+  };
+  $("exportBtn").onclick=async()=>{
+    const prefix=view.getFullYear()+"-"+pad(view.getMonth()+1);
+    const rows=sessions.filter(s=>s.date&&s.date.startsWith(prefix)&&sessOK(s)).map(s=>({s,c:campaigns.find(c=>c.id===s.campaignId)})).filter(x=>x.c)
+      .sort((a,b)=>a.s.date.localeCompare(b.s.date)||(toMin(a.s.start)??0)-(toMin(b.s.start)??0));
+    const head=["直播日期","星期","檔期名稱","檔期區間","場次名稱","直播地點","場別","開始","結束","直播主",...ROLES.map(r=>r.l),"本場廣告預算"];
+    const q=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
+    const csv="\ufeff"+[head,...rows.map(({s,c})=>[s.date,dowOf(s.date),c.name,c.start+"~"+c.end,sessTitle(s,c),s.location,SLOTS[s.slot].l,disp(s.start),disp(s.end),s.hostA,...ROLES.map(r=>s[r.k].join("、")),s.budget])].map(r=>r.map(q).join(",")).join("\r\n");
+    try{await downloads.save({filename:`直播場次_${prefix}.csv`,data:new Blob([csv],{type:"text/csv"})})}catch(err){}
+  };
+
+  if(tab==="ads"){document.querySelectorAll(".tabs [data-tab]").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.tab==="ads")));$("paneCal").hidden=true;$("paneAds").hidden=false}
+  let tt;function toast(t){const el=$("toast");el.textContent=t;el.classList.add("on");clearTimeout(tt);tt=setTimeout(()=>el.classList.remove("on"),2200)}
+  render();
+})();
+</script>
+</body>
+</html>
